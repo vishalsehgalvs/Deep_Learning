@@ -262,6 +262,78 @@ The whole thing boils down to: **make a guess → see how wrong you are → corr
 ## Coming Next
 
 - [x] ReLU and other activation functions — see `activation_functions.md`
+- [x] Building a first ANN in Python — see `plant_water_predictor.py`
 - [ ] Dropout (how to prevent the model from memorizing instead of learning)
 - [ ] Different optimizers — Adam, RMSProp vs plain Gradient Descent
-- [ ] Building a full ANN in Python
+
+---
+
+## 11. Our First Real Model — plant_water_predictor.py
+
+Now that we understand the theory, here's how it looks in actual code.
+
+### The Problem
+
+Predict whether a plant needs water based on three things you can measure:
+
+```
+Inputs:
+  soil_moisture   — how wet the soil already is (0.0 to 1.0)
+  temperature_c   — how hot it is outside (°C)
+  sunlight_hours  — how many hours of sunlight today
+
+Output:
+  1 = yes, water it
+  0 = no, it's fine
+```
+
+### Model Structure
+
+```
+  soil_moisture  ──┐
+                   ├──►  [ 8 neurons, ReLU ]  ──►  [ 1 neuron, Sigmoid ]  ──►  0 or 1
+  temperature_c  ──┤
+                   │
+  sunlight_hours ──┘
+
+  Input (3)         Hidden Layer (8)              Output (1)
+```
+
+- **3 input neurons** — one for each feature
+- **8 hidden neurons with ReLU** — finds patterns in the data
+- **1 output neuron with Sigmoid** — gives a probability (0 to 1), which we round to 0 or 1
+
+### Why Normalize the Inputs?
+
+Temperature values (20–35) are much larger numbers than soil moisture (0.0–0.8). If we feed raw numbers in, the model thinks temperature matters way more just because the numbers are bigger.
+
+Normalization scales everything to 0–1:
+
+```
+scaled = (value - min) / (max - min)
+```
+
+After this, all three features are on equal footing.
+
+### What the Training Output Means
+
+```
+Epoch 1/100 — loss: 0.72, accuracy: 0.50, val_loss: 0.68, val_accuracy: 0.50
+...
+Epoch 100/100 — loss: 0.31, accuracy: 0.83, val_loss: 0.45, val_accuracy: 0.75
+```
+
+| Metric       | What it tells you                                                  |
+| ------------ | ------------------------------------------------------------------ |
+| loss         | How wrong the model is on training data — you want this going down |
+| accuracy     | % correct on training data                                         |
+| val_loss     | Same but on the test data the model never saw during training      |
+| val_accuracy | % correct on test data                                             |
+
+**The most important check:** if `accuracy` is much higher than `val_accuracy`, the model has memorised the training data instead of learning real patterns. This is called **overfitting**.
+
+### Training Visualization
+
+![Epoch Training Visualization](epoch_training_visualization.jpg)
+
+_This chart shows how loss and accuracy change across 100 epochs — you want loss going down and accuracy going up over time._
