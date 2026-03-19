@@ -17,12 +17,12 @@ Input Layer  →  Hidden Layer(s)  →  Output Layer
 
 ### Example we will use throughout these notes
 
-| Feature | Value |
-|---------|-------|
-| X1      | 2.0   |
-| X2      | 1.0   |
-| X3      | 3.0   |
-| Actual Y (target) | 1 |
+| Feature           | Value |
+| ----------------- | ----- |
+| X1                | 2.0   |
+| X2                | 1.0   |
+| X3                | 3.0   |
+| Actual Y (target) | 1     |
 
 ---
 
@@ -90,7 +90,7 @@ Our output was 0.6168 → **predict 1** — which matches the actual Y = 1. Corr
 
 ## 4. Loss Function — How Wrong Were We?
 
-Even when we get the right class, we need to measure *how confident* we were and how far off the raw number was from perfect. This is what the **Loss Function** does.
+Even when we get the right class, we need to measure _how confident_ we were and how far off the raw number was from perfect. This is what the **Loss Function** does.
 
 We use **Binary Cross-Entropy Loss** (also called Log Loss):
 
@@ -99,8 +99,9 @@ Loss = -[ y × log(ŷ) + (1 - y) × log(1 - ŷ) ]
 ```
 
 Where:
-- `y`  = actual value (1 in our example)
-- `ŷ`  = predicted value (0.6168)
+
+- `y` = actual value (1 in our example)
+- `ŷ` = predicted value (0.6168)
 
 Plugging in:
 
@@ -116,7 +117,7 @@ Loss ≈ 0.494
 
 ## 5. Backward Propagation — How the Network Learns
 
-Forward pass told us *what we predicted*. Loss told us *how wrong we were*. Now **backward propagation goes back through the network and adjusts the weights** to reduce that error.
+Forward pass told us _what we predicted_. Loss told us _how wrong we were_. Now **backward propagation goes back through the network and adjusts the weights** to reduce that error.
 
 ### Weight Update Formula
 
@@ -233,16 +234,16 @@ Imagine whispering a message through 10 people in a line. By the time it reaches
 
 ## 9. Key Concepts — Quick Reference
 
-| Concept | What it does |
-|---------|-------------|
-| Weights | Control how much each input influences the output |
-| Bias | Shifts the output — stops the model from being stuck at zero |
-| Activation Function | Adds non-linearity so the network can learn complex patterns |
-| Loss Function | Measures how wrong the prediction was |
-| Gradient Descent | Method to reduce loss by adjusting weights in the right direction |
-| Learning Rate (η) | Controls how big each correction step is |
-| Epoch | One full forward + backward pass through all training data |
-| Vanishing Gradient | When gradients become too small in deep networks, causing early layers to stop learning |
+| Concept             | What it does                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| Weights             | Control how much each input influences the output                                       |
+| Bias                | Shifts the output — stops the model from being stuck at zero                            |
+| Activation Function | Adds non-linearity so the network can learn complex patterns                            |
+| Loss Function       | Measures how wrong the prediction was                                                   |
+| Gradient Descent    | Method to reduce loss by adjusting weights in the right direction                       |
+| Learning Rate (η)   | Controls how big each correction step is                                                |
+| Epoch               | One full forward + backward pass through all training data                              |
+| Vanishing Gradient  | When gradients become too small in deep networks, causing early layers to stop learning |
 
 ---
 
@@ -260,7 +261,7 @@ The whole thing boils down to: **make a guess → see how wrong you are → corr
 
 ## Coming Next
 
-- [ ] ReLU and other activation functions (fix for vanishing gradient)
+- [x] ReLU and other activation functions — see `activation_functions.md`
 - [ ] Dropout (how to prevent the model from memorizing instead of learning)
 - [ ] Different optimizers — Adam, RMSProp vs plain Gradient Descent
 - [ ] Building a full ANN in Python
