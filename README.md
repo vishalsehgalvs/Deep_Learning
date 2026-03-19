@@ -1,4 +1,4 @@
-# Deep Learning — My Learning Notes
+﻿# Deep Learning — My Learning Notes
 
 This repo is where I'm documenting everything I learn about Deep Learning — in plain English, no fancy jargon. Think of it as notes written by someone who is learning, for someone who is learning.
 
@@ -123,129 +123,65 @@ That's why we move to full ANNs with better activation functions.
 - [ ] Backpropagation (coming next)
 - [ ] ANN code implementation
 
-🔹 Quick Summary
+---
 
-Perceptron = basic neuron
+## The Code — plant_water_predictor.py
 
-Works using weighted sum + bias
+The first working model is a plant watering predictor. Given three measurements about a plant's environment, it predicts whether the plant needs water or not.
 
-Uses activation function
+```
+Problem: Does this plant need water right now?
 
-Learns using gradient descent
+Inputs:
+  - Soil Moisture  (how wet is the soil, 0.0 to 1.0)
+  - Temperature    (degrees Celsius)
+  - Sunlight Hours (how many hours of sun today)
 
-Limitation → only binary output
+Output:
+  - 1 = Yes, water the plant
+  - 0 = No, it's fine
+```
 
-🧠 Deep Learning – Basic Notes (with simple diagrams)
-🔹 What is a Perceptron?
+### Model Architecture
 
-A Perceptron is the simplest type of neuron
+```
+  soil_moisture  ──┐
+                   ├──►  [ Hidden: 8 neurons, ReLU ]  ──►  [ Output: 1 neuron, Sigmoid ]  ──►  needs_water (0 or 1)
+  temperature_c  ──┤
+                   │
+  sunlight_hours ──┘
 
-It takes inputs → processes them → gives output
+  Input Layer (3)      Hidden Layer (8)                    Output Layer (1)
+```
 
-🔹 Example Dataset
-Age Cholesterol BP Heart Disease
-28 150 110 1
-36 120 90 0
-42 180 160 1
+- 3 inputs → 8 hidden neurons → 1 output
+- Hidden layer uses **ReLU** (fast, works well for most problems)
+- Output layer uses **Sigmoid** (gives a probability between 0 and 1)
+- Trained with **SGD** optimizer and **Binary Cross-Entropy** loss
+- Runs for **100 epochs** with a batch size of 4
 
-👉 Inputs = Age, Cholesterol, BP
-👉 Output = 0 or 1
+### Key things happening in the code
 
-🔹 Perceptron Structure (Dot Diagram)
-x1 (Age) --------\
- \
- x2 (Chol) ------- ( • ) -----> Output (0/1)
-/
-x3 (BP) ---------/
+| Step                    | What it does                                              |
+| ----------------------- | --------------------------------------------------------- |
+| Normalization           | Scales all inputs to 0–1 so no feature dominates          |
+| Train/Test split        | 75% train, 25% test — stratified so class balance is fair |
+| model.fit               | Runs forward + backward propagation for 100 rounds        |
+| loss / val_loss         | How wrong the model is on training vs unseen test data    |
+| accuracy / val_accuracy | % correct on training vs test data                        |
 
-                 + bias
+If accuracy is high but val_accuracy is much lower → the model memorised the training data (overfitting). Both going up together means it's genuinely learning.
 
-👉 Each line has a weight (w1, w2, w3)
+![Epoch Training Visualization](Artificial_Neural_Network/epoch_training_visualization.jpg)
 
-🔹 Mathematical Idea
+_Loss and accuracy across 100 training epochs._
 
-Simple line:
+---
 
-y = mx + b
+## Files in this repo
 
-For multiple inputs:
-
-h(x) = θ0 + θ1x1 + θ2x2 + θ3x3
-
-👉 θ = weights
-👉 θ0 = bias
-
-🔹 How It Works (Step-by-step)
-Inputs → Multiply by weights → Add bias → Output
-x1*w1 \
- \
-x2*w2 ----> SUM ----> Output
-/
-x3\*w3 /
-
-        + bias
-
-🔹 Forward Propagation
-h(x) = x1*w1 + x2*w2 + x3\*w3 + bias
-
-👉 Just calculating output → nothing fancy
-
-🔹 Activation Function
-Sigmoid (S-shape)
-Output
-1 | ----
-| /
-| /
-| /
-0 |\_/****\_\_****
-Input
-
-👉 Converts value → between 0 and 1
-
-🔹 Loss Function + Gradient Descent
-Loss Curve (error)
-Error
-|
-| \ /
-| \ /
-| \ /
-| \/
-|****\_\_****\_**\_\_**
-min
-
-👉 Goal = reach the lowest point (minimum error)
-
-🔹 Neural Network (ANN)
-Input Layer Hidden Layer Output
-
-x1 ----\
- ( • ) ----\
- x2 ----/ ( • ) ----> Output
-( • ) ----/
-x3 ----/
-
-👉 Adding hidden layers → makes it powerful
-
-🔹 Limitation of Perceptron
-Output
-1 |---------
-|
-|
-0 |****\_****
-Input
-
-Only gives 0 or 1
-
-❌ Not good for continuous values
-
-🔹 Quick Summary
-
-Perceptron = basic neuron
-
-Works using weights + bias
-
-Uses activation function
-
-Learns using gradient descent
-
-Limitation → only binary output
+| File                                                 | What it is                                       |
+| ---------------------------------------------------- | ------------------------------------------------ |
+| `Artificial_Neural_Network/plant_water_predictor.py` | First ANN model — plant watering predictor       |
+| `Artificial_Neural_Network/notes.md`                 | Full ANN theory notes with examples and formulas |
+| `Artificial_Neural_Network/activation_functions.md`  | Deep dive into all activation functions          |
