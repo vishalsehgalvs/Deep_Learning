@@ -196,7 +196,7 @@ The slope value (0.01) is fixed manually. You have to decide it yourself — the
 
 ---
 
-## 6. PReLU — Parametric ReLU
+## 6. PReLU — Learnable Slope ReLU (Parametric ReLU)
 
 ### What it does
 
@@ -206,10 +206,10 @@ Same idea as Leaky ReLU, but instead of a fixed slope like 0.01, the model **lea
 
 ```
 f(x) = x       if x > 0
-f(x) = α × x   if x < 0
+f(x) = a × x   if x < 0
 ```
 
-Where `α` is a parameter the model learns (not set by you).
+Where `a` is a number the model tunes on its own during training — you don't set it manually.
 
 ### Why it's better
 
@@ -217,7 +217,7 @@ The network figures out the ideal negative slope for each neuron on its own. No 
 
 ### Downside
 
-More parameters to learn → slightly higher risk of overfitting, especially on small datasets.
+There are extra numbers to learn — slightly higher chance of the model over-memorising the training data, especially when the dataset is small.
 
 ---
 
@@ -246,17 +246,197 @@ output
   |
 ```
 
-Unlike ReLU which hard-cuts at 0, Swish has a smooth curve that allows small negative values through — this makes gradients flow more smoothly.
+Unlike ReLU which hard-cuts at 0, Swish has a smooth curve that lets tiny negative values through — this means the learning signal passes through more cleanly instead of getting cut off.
 
 ### Why it can beat ReLU
 
-- Smooth curve → better gradient flow through the network
+- Smooth curve → the learning signal travels through the network more cleanly
 - In very deep networks, that smoothness adds up and improves training
 - Used in newer architectures like EfficientNet
 
 ### Downside
 
 Uses sigmoid internally → slightly more computation than plain ReLU. Not always worth the extra cost on simpler problems.
+
+---
+
+## 8. Softmax Activation Function
+
+### What it does
+
+Softmax is used in the **output layer when you have more than two categories** to predict. It takes a bunch of raw numbers (one per class) and converts them into **probabilities that all add up to 1**.
+
+Think of it like a voting system: each class gets a score, and Softmax turns those scores into percentage votes so you know how confident the model is about each option.
+
+```
+Example: classifying a photo as cat, dog, or bird
+
+Raw scores (before Softmax):   After Softmax:
+  cat  →  2.0                    cat  →  70%
+  dog  →  1.0         →          dog  →  26%
+  bird →  0.1                    bird →   4%
+                                          ↑ always adds up to 100%
+```
+
+The highest probability wins — in this case the model says "it's a cat, 70% sure".
+
+### Formula
+
+For each class `i` out of `n` total classes:
+
+```
+softmax(x_i) = e^(x_i) / (e^(x_1) + e^(x_2) + ... + e^(x_n))
+```
+
+`e` is just a fixed math number (roughly 2.718) — raising it to a power turns any score into a positive number, which is what we need before dividing. Don't worry about why this specific number; just know that the formula converts raw scores into probabilities that add up to 1.
+
+### Worked example with numbers
+
+```
+Raw scores: cat=2.0, dog=1.0, bird=0.1
+
+Step 1 — raise e to each score:
+  e^2.0 = 7.39  (cat)
+  e^1.0 = 2.72  (dog)
+  e^0.1 = 1.11  (bird)
+
+Step 2 — sum them all:
+  total = 7.39 + 2.72 + 1.11 = 11.22
+
+Step 3 — divide each by the total:
+  cat  = 7.39 / 11.22 = 0.659  →  65.9%
+  dog  = 2.72 / 11.22 = 0.242  →  24.2%
+  bird = 1.11 / 11.22 = 0.099  →   9.9%
+
+Check: 65.9 + 24.2 + 9.9 = 100%  ✓
+
+Model says: cat (65.9% confident)
+```
+
+Notice how the highest raw score (2.0 for cat) becomes the dominant probability.
+Softmax amplifies the winner — the gap between scores gets bigger after transformation.
+
+### Graph — how raw scores become probabilities
+
+```
+Before Softmax (raw scores):       After Softmax (probabilities):
+
+Score                              Probability
+  |  *           (cat=2.0)           |  *           (cat=66%)
+  |                                  |
+  |     *        (dog=1.0)           |     *        (dog=24%)
+  |                                  |
+  |        *     (bird=0.1)          |        *     (bird=10%)
+  |__________________                |__________________
+     cat  dog  bird                     cat  dog  bird
+
+Shape is similar but everything now sits between 0 and 1, summing to 1.
+```
+
+What happens when one score is much larger:
+
+```
+Scores: cat=10.0, dog=1.0, bird=0.1
+
+After Softmax:
+  cat  →  ~99.99%   ← almost all probability mass
+  dog  →   ~0.008%
+  bird →   ~0.002%
+
+Softmax is winner-takes-most — a clear winner gets nearly all the probability.
+```
+
+### How Softmax works with Categorical Cross-Entropy
+
+Softmax and Categorical Cross-Entropy always go together at the output layer:
+
+```
+Raw scores  →  Softmax  →  Probabilities  →  Categorical Cross-Entropy  →  Loss
+
+  [2.0,              →        [0.66,              →  how far is this from
+   1.0,                        0.24,                  the correct answer?
+   0.1]                        0.10]
+```
+
+The correct answer is a **one-hot vector** — all zeros except a 1 for the true class:
+
+```
+True label: dog    →  one-hot: [0, 1, 0]   (cat=0, dog=1, bird=0)
+Predictions:       →           [0.66, 0.24, 0.10]
+
+Loss = -log(prediction for true class)
+     = -log(0.24)
+     = 1.43   ← model was only 24% sure, big loss
+
+After training, ideally:
+  Predictions = [0.02, 0.95, 0.03]
+  Loss = -log(0.95) = 0.05  ← model is right and confident, tiny loss
+```
+
+The loss decreases as the model gets better at pushing probability toward the correct class.
+
+### When to use Softmax
+
+```
+Number of output classes:          Activation to use:
+  2 classes (yes/no, spam/not)  →  Sigmoid
+  3+ classes (cat/dog/bird/...)  →  Softmax
+```
+
+### Code example
+
+```python
+from tensorflow import keras
+from tensorflow.keras import layers
+
+# Multi-class: classify 3 animals (cat, dog, bird)
+model = keras.Sequential([
+    layers.Input(shape=(10,)),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(3, activation='softmax')   # 3 output neurons, one per class
+])
+
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',        # always paired with Softmax
+    metrics=['accuracy']
+)
+```
+
+If your labels are plain integers (0, 1, 2) instead of one-hot vectors, swap the loss:
+
+```python
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy', # use this when labels are plain numbers (0, 1, 2) instead of lists
+    metrics=['accuracy']
+)
+```
+
+### Pros
+
+- Gives you a proper probability distribution — easy to see how confident the model is
+- All outputs sum to 1 — clean and meaningful
+- Works naturally with Categorical Cross-Entropy
+
+### Cons
+
+- Only used at the **output layer** — never in hidden layers
+- Can look overconfident — if one score is much higher than others, Softmax assigns it nearly all the probability even when the gap was caused by random weight initialisation
+
+**What overconfidence looks like:**
+
+```
+Raw scores: cat=5.0, dog=0.1, bird=0.1
+
+After Softmax:
+  cat  →  98.7%   ← model looks very confident
+  dog  →   0.7%
+  bird →   0.7%
+
+The model may not truly "know" it's a cat — the high score might just reflect
+how the weights happen to be set. Softmax amplifies confidence regardless.
+```
 
 ---
 
@@ -289,6 +469,7 @@ Output Layer  →  depends on your task (see table below)
 | Leaky ReLU | (-∞, +∞)     | No                      | No             | Hidden layers (when ReLU fails) |
 | PReLU      | (-∞, +∞)     | No                      | No             | Deep networks (adaptive)        |
 | Swish      | (-∞, +∞)     | No                      | No             | Very deep modern networks       |
+| Softmax    | (0, 1) each  | No                      | No             | Multi-class output layer        |
 
 ---
 
@@ -300,5 +481,6 @@ Output Layer  →  depends on your task (see table below)
 - **ReLU** — the workhorse of modern deep learning, fast and simple, use this by default
 - **Leaky ReLU / PReLU** — when your ReLU neurons are dying, switch to these
 - **Swish** — smooth, modern, worth trying in very deep networks
+- **Softmax** — converts raw scores to probabilities, only used at the output layer for 3+ class problems, always paired with Categorical Cross-Entropy
 
-**Default rule of thumb:** Use **ReLU** in all hidden layers unless you have a specific reason not to.
+**Default rule of thumb:** Use **ReLU** in all hidden layers. At the output layer: **Sigmoid** for yes/no, **Softmax** for 3+ categories, **Linear** for predicting a number.
