@@ -196,11 +196,11 @@ Right of delta: behaves like MAE (straight).
 MSLE = (1/n) × Σ (log(actual + 1) - log(predicted + 1))²
 ```
 
-The `+1` is there so you don't take log of zero (log(0) is undefined).
+The `+1` is there so the number inside the log is never zero — taking the log of zero has no answer (you can't do it), so adding 1 keeps it safe.
 
 **Why logarithms?**
 
-When values grow exponentially (like stock prices, population, viral video views), the _relative_ difference matters more than the _absolute_ difference.
+When values grow very fast (like stock prices, population, viral video views), the _relative_ difference matters more than the _absolute_ difference.
 
 ```
 Predicting 10 vs 20    → big relative error (off by 100%)
@@ -356,7 +356,7 @@ Prediction B: [0.6, 0.1, 0.3]  → low probability on Dog  → high loss ✗
 **Cons:**
 
 - Like binary cross-entropy, struggles with heavily imbalanced datasets
-- Assumes classes are mutually exclusive — can't use it for multi-label problems where something can belong to multiple categories at once (e.g. a photo tagged as both "beach" and "sunset")
+- Assumes each prediction belongs to only one category — doesn't work if something can belong to multiple categories at the same time (e.g. a photo tagged as both "beach" and "sunset")
 
 ---
 

@@ -123,22 +123,23 @@ Forward pass told us _what we predicted_. Loss told us _how wrong we were_. Now 
 
 ```
 new_weight = old_weight - (learning_rate × gradient)
-
-w = w - η × (∂L/∂w)
 ```
 
-- `η` (eta) = **learning rate** — how big of a correction step to take (usually something small like 0.01)
-- `∂L/∂w` = **gradient** — tells us in which direction and how much to adjust the weight
+- `learning_rate` = how big of a correction step to take (usually something small like 0.01)
+- `gradient` = which direction to nudge the weight, and by how much
 
-### Chain Rule
+### How the correction travels backwards through the network
 
-To calculate the gradient for a weight deep inside the network, we use the **chain rule** from calculus. We trace the effect of that weight all the way to the final loss:
+A weight deep inside the network doesn't directly touch the final answer. But it affects the next layer, which affects the next, which eventually affects the loss. So to figure out how much to blame an inner weight, we trace the effect backwards step by step — each layer's adjustment feeds into the one before it.
+
+This is called **backpropagation** — the blame (error signal) travels backwards from the output all the way to the first layer:
 
 ```
-∂L/∂w = (∂L/∂output) × (∂output/∂hidden) × (∂hidden/∂w)
+Output layer  ←  Hidden layer  ←  Input layer
+   (error known here, passes blame backwards)
 ```
 
-Think of it as asking: "If I tweak this one weight by a tiny bit, how does the final loss change?" — we trace each small effect backwards through every layer.
+The deeper a weight is, the more steps that blame has to travel — which is why very deep networks can struggle (the signal gets weaker the further back it goes).
 
 ---
 
@@ -252,7 +253,7 @@ Imagine whispering a message through 10 people in a line. By the time it reaches
 1. **Data goes in** through the input layer
 2. **Weighted sums + activation functions** run and produce a prediction (Forward Propagation)
 3. **Loss is calculated** — how far off was the prediction?
-4. **Gradients are computed** using the chain rule and weights are corrected (Backward Propagation)
+4. **Weights are adjusted** by tracing the error backwards through every layer (Backward Propagation)
 5. Repeat until loss is minimal → network has learned
 
 The whole thing boils down to: **make a guess → see how wrong you are → correct yourself → repeat.**
@@ -261,10 +262,16 @@ The whole thing boils down to: **make a guess → see how wrong you are → corr
 
 ## Coming Next
 
-- [x] ReLU and other activation functions — see `activation_functions.md`
-- [x] Building a first ANN in Python — see `plant_water_predictor.py`
-- [ ] Dropout (how to prevent the model from memorizing instead of learning)
-- [ ] Different optimizers — Adam, RMSProp vs plain Gradient Descent
+- [x] ReLU and all activation functions including Softmax — see `activation_functions.md`
+- [x] All loss functions with graphs and pros/cons — see `loss_functions.md`
+- [x] All optimizers including Adam, RMSProp, AdaGrad — see `optimizers.md`
+- [x] First ANN — binary classification — see `plant_water_predictor.py`
+- [x] Second ANN — multi-class classification — see `iris_species_classifier.py`
+- [x] Black box vs white box models — see `blackbox_vs_whitebox.md`
+- [ ] Backpropagation deep dive
+- [ ] Dropout — how to stop the model from memorising
+- [ ] Learning rate schedules
+- [ ] Batch normalization
 
 ---
 
