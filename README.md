@@ -105,9 +105,9 @@ The more hidden layers, the deeper the network — that's why it's called **Deep
 
 ## Limitation of a Basic Perceptron
 
-- Uses a simple step function — output is either 0 or 1, nothing in between
-- Can't predict continuous values like house prices or temperatures
-- Only works well for very simple, linearly separable problems
+- It can only say yes or no — there's nothing in between (no "maybe 70%")
+- Can't predict numbers like house prices or temperatures — it only does yes/no
+- Only works when the two groups being separated can be split by a straight line — anything more complex and it fails
 
 That's why we move to full ANNs with better activation functions.
 
@@ -117,11 +117,17 @@ That's why we move to full ANNs with better activation functions.
 
 - [x] Perceptron basics
 - [x] Forward propagation
-- [x] Activation functions (Sigmoid)
-- [x] Loss function & Gradient Descent
-- [x] ANN concept
-- [ ] Backpropagation (coming next)
-- [ ] ANN code implementation
+- [x] Activation functions — all 8 including Softmax (see `activation_functions.md`)
+- [x] Loss functions — all 6 with graphs and pros/cons (see `loss_functions.md`)
+- [x] Gradient Descent and all Optimizers — SGD, Adam, RMSProp and more (see `optimizers.md`)
+- [x] ANN concept and theory (see `notes.md`)
+- [x] First ANN model — binary classification (see `plant_water_predictor.py`)
+- [x] Second ANN model — multi-class classification (see `iris_species_classifier.py`)
+- [x] Black box vs white box models (see `blackbox_vs_whitebox.md`)
+- [ ] Backpropagation deep dive
+- [ ] Dropout — how to stop the model from memorising
+- [ ] Learning rate schedules
+- [ ] Batch normalization
 
 ---
 
@@ -162,13 +168,13 @@ Output:
 
 ### Key things happening in the code
 
-| Step                    | What it does                                              |
-| ----------------------- | --------------------------------------------------------- |
-| Normalization           | Scales all inputs to 0–1 so no feature dominates          |
-| Train/Test split        | 75% train, 25% test — stratified so class balance is fair |
-| model.fit               | Runs forward + backward propagation for 100 rounds        |
-| loss / val_loss         | How wrong the model is on training vs unseen test data    |
-| accuracy / val_accuracy | % correct on training vs test data                        |
+| Step                    | What it does                                                       |
+| ----------------------- | ------------------------------------------------------------------ |
+| Normalization           | Scales all inputs to 0–1 so no feature dominates                   |
+| Train/Test split        | 75% train, 25% test — keeps equal numbers of yes/no in both halves |
+| model.fit               | Runs forward + backward propagation for 100 rounds                 |
+| loss / val_loss         | How wrong the model is on training vs unseen test data             |
+| accuracy / val_accuracy | % correct on training vs test data                                 |
 
 If accuracy is high but val_accuracy is much lower → the model memorised the training data (overfitting). Both going up together means it's genuinely learning.
 
@@ -178,10 +184,69 @@ _Loss and accuracy across 100 training epochs._
 
 ---
 
+## The Second Model — iris_species_classifier.py
+
+The second project classifies Iris flowers into 3 species using 4 measurements.
+This introduces multi-class classification with **Softmax** output and **Categorical Cross-Entropy** loss.
+
+```
+Problem: Which species is this Iris flower?
+
+Inputs:
+  - Sepal Length
+  - Sepal Width
+  - Petal Length
+  - Petal Width
+
+Output:
+  - Iris-setosa     (0)
+  - Iris-versicolor (1)
+  - Iris-virginica  (2)
+```
+
+### Model Architecture
+
+```
+  sepal_length  ──┐
+  sepal_width   ──┤──►  [ Dense: 16, ReLU ]  ──►  [ Dense: 8, ReLU ]  ──►  [ Dense: 3, Softmax ]  ──►  species
+  petal_length  ──┤
+  petal_width   ──┘
+
+  Input (4)          Hidden 1 (16)            Hidden 2 (8)             Output (3)
+```
+
+- 2 hidden layers (16 then 8 neurons) — deeper than the first model
+- Output uses **Softmax** — gives a probability per class, all adding to 100%
+- Loss: **Categorical Cross-Entropy** — the right choice when Softmax is used
+- Optimizer: **Adam** — faster and more reliable than SGD for multi-class problems
+
+We also run a **Perceptron** first as a baseline to compare against the ANN.
+
+### Training graphs
+
+![Species Pair Plot](Artificial_Neural_Network/images/iris_species_pairplot.png)
+
+_Each species plotted against every other feature — shows how separable the classes are._
+
+![ANN Epoch Accuracy](Artificial_Neural_Network/images/ann_epoch_accuracy.png)
+
+_Training accuracy per epoch — how the ANN improves over 100 rounds._
+
+![Training vs Validation Accuracy](Artificial_Neural_Network/images/ann_training_validation_accuracy.png)
+
+_Train vs validation accuracy — if both go up together the model is learning well._
+
+---
+
 ## Files in this repo
 
-| File                                                 | What it is                                       |
-| ---------------------------------------------------- | ------------------------------------------------ |
-| `Artificial_Neural_Network/plant_water_predictor.py` | First ANN model — plant watering predictor       |
-| `Artificial_Neural_Network/notes.md`                 | Full ANN theory notes with examples and formulas |
-| `Artificial_Neural_Network/activation_functions.md`  | Deep dive into all activation functions          |
+| File                                                   | What it is                                              |
+| ------------------------------------------------------ | ------------------------------------------------------- |
+| `Artificial_Neural_Network/plant_water_predictor.py`   | First ANN — binary classification, plant watering       |
+| `Artificial_Neural_Network/iris_species_classifier.py` | Second ANN — multi-class classification, Iris species   |
+| `Artificial_Neural_Network/Iris.csv`                   | Dataset used by iris_species_classifier.py              |
+| `Artificial_Neural_Network/notes.md`                   | Core ANN theory — forward prop, backprop, training loop |
+| `Artificial_Neural_Network/activation_functions.md`    | All activation functions with graphs and formulas       |
+| `Artificial_Neural_Network/loss_functions.md`          | All loss functions with graphs and pros/cons            |
+| `Artificial_Neural_Network/optimizers.md`              | All optimizers with graphs, formulas and code examples  |
+| `Artificial_Neural_Network/blackbox_vs_whitebox.md`    | What black box and white box models mean in plain words |
