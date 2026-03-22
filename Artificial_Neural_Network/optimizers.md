@@ -83,7 +83,7 @@ Very clean curve — each step is perfectly calculated using all the data.
 
 - **Extremely slow** for large datasets — imagine loading 1 million rows just to take one step
 - Needs everything in memory at once — not feasible for real-world big data
-- Not practical at scale
+- Not practical for large datasets — it just takes too long when you have millions of rows
 
 **What the drawback looks like:**
 
@@ -100,7 +100,7 @@ Time-wise, Batch GD just can't compete on large data.
 
 ---
 
-## 2. Stochastic Gradient Descent (SGD)
+## 2. Stochastic Gradient Descent (SGD — random one-at-a-time updates)
 
 ### The idea
 
@@ -441,12 +441,14 @@ Think of it like traffic: if one lane is moving fast, slow it down. If another l
 ### Formula
 
 ```
-cache  = β × cache + (1 - β) × gradient²
-weight = weight - (learning_rate / √cache) × gradient
+running_total  = β × running_total + (1 - β) × gradient²
+weight = weight - (learning_rate / √running_total) × gradient
 ```
 
-Big gradient → cache gets big → learning rate shrinks → smaller step
-Small gradient → cache stays small → learning rate stays bigger → larger step
+Big gradient → running_total gets big → learning rate shrinks → smaller step
+Small gradient → running_total stays small → learning rate stays bigger → larger step
+
+The `running_total` is just a memory of how large the gradients have been recently for each weight. Big past gradients → slow down. Small past gradients → keep going faster.
 
 ### Graph — adapts to the terrain
 
@@ -482,43 +484,125 @@ Loss
   |  *
   |   *
   |    * * * * * * * * *  ← stuck, barely moving
-  |                         (cache has grown too large,
-  |                          effective learning rate ≈ 0)
+  |                         (running_total has grown too large,
+  |                          step size has shrunk to almost nothing)
   |_________________________________ updates
 ```
 
-Over time the cache (accumulated squared gradients) keeps growing.
-This makes the effective learning rate shrink towards zero — the model
+Over time the running_total keeps growing and never shrinks. This makes the step size shrink towards zero — the model
 slows down and can get stuck before reaching the true minimum.
 This is called the **dying learning rate** problem.
 
 ---
 
-## 6. Adam — Adaptive Moment Estimation
+## 6. Adam — Adaptive Moment Estimation (the go-to optimizer for most people)
 
 ### The idea
 
 Adam combines the best of **Momentum** and **RMSProp**.
 
-- From Momentum: remembers which direction we've been moving (first moment)
-- From RMSProp: adapts the learning rate per weight (second moment)
+- From Momentum: remembers which direction the weights have been moving
+- From RMSProp: adjusts the step size per weight based on how large the recent gradients have been
+
+The name "Adaptive Moment Estimation" is just the technical way of saying it adapts its step sizes based on a memory of past gradients. Ignore the name — just know it does both things at once.
 
 This makes it the most powerful and the most widely used optimizer in deep learning.
+
+Think of it like a GPS that not only knows the current slope (gradient) but also remembers where it has been going (momentum) AND adjusts its speed based on how bumpy the road has been (RMSProp). That combination makes it both fast AND smart.
+
+```
+Momentum alone:   remembers direction  →  fast but fixed step size
+RMSProp alone:    adapts step size     →  smart but can forget direction
+Adam:             does BOTH            →  fast + smart = best of everything
+```
 
 ### Formula
 
 ```
-m = β1 × m + (1 - β1) × gradient          ← momentum part
-v = β2 × v + (1 - β2) × gradient²          ← RMSProp part
+Step 1 — track the direction (momentum part):
+  m = β1 × m + (1 - β1) × gradient
 
-weight = weight - (learning_rate / √v) × m
+Step 2 — track the size of gradients (RMSProp part):
+  v = β2 × v + (1 - β2) × gradient²
+
+Step 3 — bias correction (fixes the cold start problem):
+  m_hat = m / (1 - β1^t)
+  v_hat = v / (1 - β2^t)
+
+Step 4 — update the weight:
+  weight = weight - (learning_rate / (√v_hat + ε)) × m_hat
 ```
+
+Plain English version:
+
+- `m` = running average of which direction gradients point
+- `v` = running average of how big the gradients are
+- `m_hat` and `v_hat` = corrected versions of m and v (the bias correction stops Adam from taking tiny steps at the very start)
+- `ε` (epsilon) = tiny number like 1e-8 to avoid dividing by zero
 
 Default values that work well for most problems:
 
-- `β1 = 0.9` (momentum memory)
-- `β2 = 0.999` (gradient scaling memory)
+- `β1 = 0.9` (momentum memory — remember 90% of past direction)
+- `β2 = 0.999` (gradient size memory — remember 99.9% of past sizes)
 - `learning_rate = 0.001`
+- `ε = 1e-8`
+
+### Why bias correction? — The cold start explained
+
+At the very beginning (t=1), m and v start at zero. Without correction, the first few updates are too small because the averages haven't warmed up yet.
+
+```
+Without bias correction:
+  Step 1: m ≈ 0.1  ,  v ≈ 0.001   ← both are tiny (just started)
+  Update is almost zero even though gradient is meaningful
+  Model barely moves at the start
+
+With bias correction:
+  m_hat = m / (1 - 0.9^1) = m / 0.1  →  scales it up to proper size
+  v_hat = v / (1 - 0.999^1) = v / 0.001  →  scales it up too
+  First few steps are now correct size  ← model learns right away
+```
+
+This correction only matters at the start. After a while, β1^t and β2^t get so close to zero that the correction becomes 1 and disappears naturally.
+
+### Worked example with numbers
+
+Let's trace through one Adam update:
+
+```
+Current weight  = 0.5
+learning_rate   = 0.001
+β1 = 0.9,  β2 = 0.999,  ε = 1e-8
+Current gradient = 0.3
+
+--- Previous values (from last step) ---
+m (old) = 0.0  (first step, starts at zero)
+v (old) = 0.0  (first step, starts at zero)
+t = 1   (first time step)
+
+--- Step 1: Update m (momentum) ---
+m = 0.9 × 0.0 + (1 - 0.9) × 0.3
+  = 0.0 + 0.1 × 0.3
+  = 0.03
+
+--- Step 2: Update v (RMSProp) ---
+v = 0.999 × 0.0 + (1 - 0.999) × 0.3²
+  = 0.0 + 0.001 × 0.09
+  = 0.00009
+
+--- Step 3: Bias correction ---
+m_hat = 0.03 / (1 - 0.9^1) = 0.03 / 0.1 = 0.3
+v_hat = 0.00009 / (1 - 0.999^1) = 0.00009 / 0.001 = 0.09
+
+--- Step 4: Update weight ---
+weight = 0.5 - (0.001 / (√0.09 + 1e-8)) × 0.3
+       = 0.5 - (0.001 / 0.3) × 0.3
+       = 0.5 - 0.001
+       = 0.499   ← tiny step in the right direction
+```
+
+The weight moved by exactly the learning rate (0.001) in this case.
+As training continues, m and v accumulate history and the steps become smarter.
 
 ### Graph — fast, smooth, reliable
 
@@ -534,11 +618,79 @@ Loss
   |_________________________________ updates
 ```
 
+Compare with SGD:
+
+```
+SGD (noisy):                 Adam (smooth):
+
+Loss                         Loss
+  |*  *   *                    |*
+  |   *  *   *                 | *
+  |     *  *   *               |  *
+  |         *   *              |   *
+  |            *   *           |    *
+  |              *   *         |     * * *  ← settles cleanly
+  |__________________          |________________
+```
+
+### Library and Code
+
+**In Keras / TensorFlow (default — just one line):**
+
+```python
+from tensorflow import keras
+from tensorflow.keras import layers
+
+model = keras.Sequential([
+    layers.Input(shape=(3,)),
+    layers.Dense(8, activation='relu'),
+    layers.Dense(1, activation='sigmoid')
+])
+
+# Adam with all defaults — this is what 90% of models use
+model.compile(
+    optimizer='adam',                  # simplest way
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+
+model.fit(X_train, y_train, epochs=100, batch_size=32)
+```
+
+**With custom settings:**
+
+```python
+# Fine-tune Adam if needed (rarely necessary)
+optimizer = keras.optimizers.Adam(
+    learning_rate=0.001,   # default, usually don't change
+    beta_1=0.9,            # momentum memory
+    beta_2=0.999,          # gradient size memory
+    epsilon=1e-8           # avoid divide by zero
+)
+
+model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+```
+
+**For our plant watering predictor (replacing SGD with Adam):**
+
+```python
+# Original used SGD:
+# optimizer = keras.optimizers.SGD(learning_rate=0.01)
+
+# Switch to Adam — usually better performance:
+model.compile(
+    optimizer='adam',
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+```
+
 ### Pros
 
 - Fast convergence — learns quickly from the start
 - Works out of the box on most problems with default settings
 - Less tuning needed compared to plain SGD or Momentum
+- Bias correction makes the first few steps correct (no cold start waste)
 - **Default choice in almost all modern deep learning**
 
 ### Cons
@@ -566,6 +718,19 @@ Adam is so good at fitting training data that it can sometimes overfit —
 learn the training examples too perfectly without learning the underlying pattern.
 In these cases, SGD with momentum can actually generalise better because
 its noise acts like a natural brake.
+
+### When to use Adam vs SGD
+
+```
+Use Adam when:                      Use SGD + Momentum when:
+  - Starting a new project            - Model is overfitting and you want
+  - You don't want to tune a lot        some natural noise to regularise
+  - Image classification              - You have time to tune carefully
+  - NLP tasks                         - Research / competition fine-tuning
+  - Almost everything else            - Final polish on a nearly-done model
+```
+
+Rule of thumb: **Start with Adam. If it overfits, switch to SGD + Momentum.**
 
 ---
 
