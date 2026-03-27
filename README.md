@@ -127,11 +127,16 @@ That's why we move to full ANNs with better activation functions.
 - [x] Black box vs white box models (see `blackbox_vs_whitebox.md`)
 - [ ] Backpropagation deep dive
 - [ ] Learning rate schedules
-- [ ] Batch normalization
 - [x] Why ANNs fail on images (see `Convolutional_Neural_Network/notes.md`)
 - [x] CNN theory — filters, feature maps, pooling, padding, strides, flattening (see `Convolutional_Neural_Network/notes.md`)
+- [x] Edge detection deep dive — step-by-step filter math with worked examples (see `Convolutional_Neural_Network/notes.md` Section 12)
 - [x] Dropout — how to stop the model from memorising (see `Convolutional_Neural_Network/notes.md` Section 17)
+- [x] Optimisers in CNNs — SGD vs Adam, why Adam is better for deep networks (see `Convolutional_Neural_Network/notes.md` Section 18)
+- [x] CNN project walkthrough — how every line of code maps to the theory (see `Convolutional_Neural_Network/notes.md` Section 19)
 - [x] CNN model — handwritten digit classifier, Perceptron vs CNN comparison (see `Convolutional_Neural_Network/cnn.py`)
+- [ ] Batch Normalization — stabilising training
+- [ ] Transfer Learning — reusing a pre-trained CNN instead of training from scratch
+- [ ] Famous CNN architectures — LeNet, AlexNet, VGG, ResNet
 
 ---
 
@@ -239,6 +244,103 @@ _Training accuracy per epoch — how the ANN improves over 100 rounds._
 ![Training vs Validation Accuracy](Artificial_Neural_Network/images/ann_training_validation_accuracy.png)
 
 _Train vs validation accuracy — if both go up together the model is learning well._
+
+---
+
+## The CNN Project — Handwritten Digit Classifier (cnn.py)
+
+The CNN project trains two models side by side on handwritten digit images and compares their accuracy.
+
+```
+Problem: What digit (0–9) is written in this image?
+
+Inputs:
+  - 28×28 grayscale image (784 pixel values, each between 0 and 255)
+
+Output:
+  - One of 10 classes: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+```
+
+### Dataset
+
+Source: [Kaggle Digit Recogniser Competition](https://www.kaggle.com/competitions/digit-recognizer)
+
+| File                                          | Rows   | Description                                          |
+| --------------------------------------------- | ------ | ---------------------------------------------------- |
+| `Convolutional_Neural_Network/data/train.csv` | 42,000 | Labelled images — `label` column + 784 pixel columns |
+| `Convolutional_Neural_Network/data/test.csv`  | 28,000 | Unlabelled images — 784 pixel columns only           |
+
+### Model 1 — Perceptron (Baseline)
+
+The simplest possible approach. Flattens the image into a single list of numbers and makes one linear guess. Used as a "dumb" comparison point.
+
+```
+  Input (28×28)
+      ↓
+  Flatten  →  784 numbers
+      ↓
+  Dense(10, Softmax)  →  10 class probabilities
+```
+
+- Optimizer: **SGD** | Loss: **Categorical Cross-Entropy** | Epochs: 10 | Batch: 32
+- No hidden layers, no pattern detection — just a straight guess from raw pixels
+
+### Model 2 — CNN
+
+The real model. Uses convolutional layers to scan the image for edges and shapes before making a prediction.
+
+```
+  Input (28×28×1)
+      ↓
+  Conv2D(32 filters, 3×3, ReLU, padding=same)  →  28×28×32
+  MaxPooling2D(2×2)                             →  14×14×32
+  Dropout(0.25)
+      ↓
+  Conv2D(64 filters, 3×3, ReLU, padding=same)  →  14×14×64
+  MaxPooling2D(2×2)                             →   7×7×64
+  Dropout(0.25)
+      ↓
+  Flatten  →  3136 numbers
+  Dense(128, ReLU)
+  Dropout(0.5)
+  Dense(10, Softmax)  →  10 class probabilities
+```
+
+- Optimizer: **Adam** | Loss: **Categorical Cross-Entropy** | Epochs: 10 | Batch: 64
+- Two conv layers pick up low-level features (edges) then higher-level shapes
+- Dropout at 0.25 and 0.5 prevents the model from memorising the training data
+
+### Key things happening in the code
+
+| Step             | What it does                                                           |
+| ---------------- | ---------------------------------------------------------------------- |
+| Normalisation    | Divides all pixel values by 255 to get values between 0.0 and 1.0      |
+| Train/Val split  | 80% training, 20% validation (`random_state=42` for reproducibility)   |
+| Reshape          | Perceptron uses `(N, 28, 28)` — CNN uses `(N, 28, 28, 1)` for channel  |
+| One-hot encoding | Digit `3` becomes `[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]`                     |
+| Final comparison | Both models printed side by side — accuracy on the same validation set |
+
+### Results
+
+![Sample handwritten digits from the dataset](Convolutional_Neural_Network/images/handwritten_digits.png)
+
+_Sample images from the dataset — each 28×28 grayscale image is one digit the model must classify._
+
+![CNN training history](Convolutional_Neural_Network/images/cnn_training_history.png)
+
+_CNN loss and accuracy across 10 training epochs — both training and validation improving together._
+
+![CNN sample predictions](Convolutional_Neural_Network/images/cnn_sample_predictions.png)
+
+_CNN predictions on unseen validation images — the predicted label shown above each digit._
+
+![CNN confusion matrix](Convolutional_Neural_Network/images/cnn_confusion_matrix.png)
+
+_Confusion matrix for the CNN — each row is the true digit, each column is what the model predicted. The diagonal shows correct predictions; off-diagonal cells show where it got confused._
+
+![Model comparison accuracy](Convolutional_Neural_Network/images/model_comparison_accuracy.png)
+
+_Side-by-side accuracy comparison of the Perceptron baseline vs the CNN — shows how much the CNN improves over the simple baseline._
 
 ---
 

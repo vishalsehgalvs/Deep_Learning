@@ -104,15 +104,15 @@ Dense(10, softmax)  →  10 class probabilities
 
 All plots are saved to the `images/` folder when `cnn.py` is run:
 
-| File                                | Description                                           |
-| ----------------------------------- | ----------------------------------------------------- |
-| `perceptron_training_history.png`   | Accuracy & loss over 10 epochs — Perceptron           |
-| `perceptron_confusion_matrix.png`   | 10×10 heatmap — which digits the Perceptron confuses  |
-| `perceptron_sample_predictions.png` | 10 sample digits with true vs predicted labels        |
-| `cnn_training_history.png`          | Accuracy & loss over 10 epochs — CNN                  |
-| `cnn_confusion_matrix.png`          | 10×10 heatmap — which digits the CNN confuses         |
-| `cnn_sample_predictions.png`        | 10 sample digits with true vs predicted labels        |
-| `model_comparison_accuracy.png`     | Bar chart comparing final validation accuracy of both |
+| File                                       | Description                                           |
+| ------------------------------------------ | ----------------------------------------------------- |
+| `images/perceptron_training_history.png`   | Accuracy & loss over 10 epochs — Perceptron           |
+| `images/perceptron_confusion_matrix.png`   | 10×10 heatmap — which digits the Perceptron confuses  |
+| `images/perceptron_sample_predictions.png` | 10 sample digits with true vs predicted labels        |
+| `images/cnn_training_history.png`          | Accuracy & loss over 10 epochs — CNN                  |
+| `images/cnn_confusion_matrix.png`          | 10×10 heatmap — which digits the CNN confuses         |
+| `images/cnn_sample_predictions.png`        | 10 sample digits with true vs predicted labels        |
+| `images/model_comparison_accuracy.png`     | Bar chart comparing final validation accuracy of both |
 
 ---
 
