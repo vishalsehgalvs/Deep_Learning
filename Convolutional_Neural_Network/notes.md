@@ -488,8 +488,15 @@ The whole thing boils down to: **scan for clues → compress → stack layers un
 
 ## Coming Next
 
-- [ ] CNN implementation — handwritten digit classifier using MNIST (see `cnn.py`)
-- [ ] Dropout in CNNs — how to stop overfitting
+- [x] CNN implementation — handwritten digit classifier using MNIST (see `cnn.py`)
+- [x] Dropout in CNNs — how to stop overfitting (see Section 17)
+- [x] How edge detection actually works — filters, kernels, worked examples (see Section 12)
+- [x] Padding — keeping the image the same size after each layer (see Section 13)
+- [x] Strides — scanning speed vs detail trade-off (see Section 14)
+- [x] Pooling deep dive — Max, Average, Min with examples (see Section 15)
+- [x] Flattening — connecting conv layers to the Dense layer (see Section 16)
+- [x] Optimisers — SGD vs Adam in the context of CNNs (see Section 18)
+- [x] Project walkthrough — how every line of code maps to the theory (see Section 19)
 - [ ] Batch Normalization — stabilising training
 - [ ] Transfer Learning — reusing a pre-trained CNN instead of training from scratch
 - [ ] Famous CNN architectures — LeNet, AlexNet, VGG, ResNet
@@ -951,8 +958,196 @@ Conv/Pool Layers  →  Feature Maps (3D)  →  Flatten  →  Dense Layers  →  
 
 ## Coming Next (continued)
 
-- [ ] Code implementation — CNN on MNIST using Keras (`cnn.py`)
-- [ ] Dropout in CNNs — how to stop overfitting
+- [x] Code implementation — CNN on MNIST using Keras (`cnn.py`)
+- [x] Dropout in CNNs — how to stop overfitting (see Section 17)
+- [x] Optimisers — SGD vs Adam in the context of CNNs (see Section 18)
+- [x] Project walkthrough — how every line of code maps to the theory (see Section 19)
 - [ ] Batch Normalization — stabilising training
 - [ ] Transfer Learning — reusing a pre-trained CNN instead of training from scratch
 - [ ] Famous CNN architectures — LeNet, AlexNet, VGG, ResNet
+
+---
+
+## 17. Dropout — Preventing the Model from Memorising
+
+Dropout is a regularisation technique: a way to stop the model from overfitting (memorising training data instead of learning real patterns).
+
+### The Idea
+
+During training, Dropout randomly switches off a percentage of neurons on every forward pass. The turned-off neurons don't contribute to predictions and don't receive gradient updates that step.
+
+```
+Without Dropout (all neurons active every time):
+  Input → [●  ●  ●  ●  ●  ●] → Output
+
+With Dropout(0.25) — 25% of neurons randomly silenced each step:
+  Input → [●  ○  ●  ●  ○  ●] → Output   (step 1)
+  Input → [○  ●  ●  ○  ●  ●] → Output   (step 2)
+  Input → [●  ●  ○  ●  ●  ○] → Output   (step 3)
+  (different neurons silenced each time)
+```
+
+The key: at test/prediction time, Dropout is turned OFF — all neurons are active. The layer just scales its outputs to compensate for the fact that it was used to having fewer neurons active.
+
+### Why This Stops Overfitting
+
+When a model overfits, individual neurons start to rely on each other too heavily — they learn very specific combinations that work perfectly on the training data but fail on new examples. This is called **co-adaptation**.
+
+Dropout breaks this. Because any neuron might be switched off at any moment, no neuron can depend on a specific partner always being there. Every neuron is forced to learn features that are useful on their own, not just useful in one specific combination.
+
+The result is a more robust, generalised network.
+
+### Dropout in This Project
+
+In `cnn.py`, three Dropout layers are used:
+
+```python
+# After Block 1 (first Conv + Pool)
+Dropout(0.25)   # randomly silence 25% of neurons after Block 1
+
+# After Block 2 (second Conv + Pool)
+Dropout(0.25)   # randomly silence 25% of neurons after Block 2
+
+# Before the output layer (strongest regularisation point)
+Dropout(0.5)    # randomly silence 50% of neurons — hardest point to overfit
+```
+
+The 50% Dropout before the output is intentionally stronger. The fully connected layers right before the output are the most prone to overfitting — they have a lot of parameters and they're close to making the final decision. Being more aggressive here gives the model the best resistance to memorisation.
+
+### Quick Rule of Thumb
+
+| Location           | Typical Dropout rate |
+| ------------------ | -------------------- |
+| After Conv blocks  | 0.25 (25%)           |
+| After Dense layers | 0.5 (50%)            |
+| Output layer       | Never — no Dropout   |
+
+---
+
+## 18. Optimisers — SGD vs Adam
+
+The optimiser is the algorithm that adjusts the network's weights during training. Every time the model makes a prediction and measures how wrong it was (the loss), the optimiser decides how much to change each weight and in which direction.
+
+### SGD (Stochastic Gradient Descent)
+
+SGD is the simplest possible optimiser. It uses the same fixed learning rate for every single weight:
+
+```
+new_weight = old_weight − (learning_rate × gradient)
+```
+
+- `learning_rate` is a constant you set beforehand (e.g. 0.01)
+- `gradient` is how much the loss changes if you nudge that weight
+
+**The problem:** one global learning rate is too rigid. Some weights need big updates (they're far from their ideal value), others need tiny nudges (they're almost right). SGD treats them all the same.
+
+In this project the Perceptron uses SGD — it's fine for a simple linear model because there aren't many weights to worry about.
+
+### Adam (Adaptive Moment Estimation)
+
+Adam is the go-to optimiser for deep learning. It gives every weight its **own adaptive learning rate**, automatically adjusting based on the history of how that weight has been changing.
+
+Internally, Adam tracks two things per weight:
+
+```
+m = running average of recent gradients        (momentum — which direction to go)
+v = running average of squared gradients       (how wild the gradient has been)
+
+update = m / √v
+```
+
+The effect:
+
+- Weights whose gradients have been consistently pointing one direction get a bigger push
+- Weights whose gradients have been bouncing around wildly get a smaller, more cautious update
+
+This makes training **faster** and **more stable** without needing to manually tune the learning rate.
+
+| Property              | SGD                            | Adam                                      |
+| --------------------- | ------------------------------ | ----------------------------------------- |
+| Learning rate         | One fixed rate for all weights | Separate adaptive rate per weight         |
+| Speed                 | Slower to converge             | Much faster convergence                   |
+| Sensitivity to tuning | High — must set learning rate  | Low — works well with defaults            |
+| Best for              | Simple linear models           | Deep networks (CNNs, LSTMs, Transformers) |
+| Used in this project  | Perceptron                     | CNN                                       |
+
+---
+
+## 19. Project Implementation — How the Code Maps to the Theory
+
+This section connects everything above to the actual `cnn.py` file in this project.
+
+### Dataset
+
+The project uses the [Kaggle MNIST digit recogniser](https://www.kaggle.com/competitions/digit-recognizer) dataset:
+
+| File        | Rows   | Columns                       | Purpose                      |
+| ----------- | ------ | ----------------------------- | ---------------------------- |
+| `train.csv` | 42,000 | `label` + 784 pixel columns   | Training and validation data |
+| `test.csv`  | 28,000 | 784 pixel columns (no labels) | Kaggle submission format     |
+
+Each row is one 28×28 grayscale image stored as 784 numbers (pixel0 to pixel783) with values 0–255.
+
+### Preprocessing Steps
+
+```
+1. Separate X (pixels) and y (labels)
+2. Normalise pixels:  0–255  →  0.0–1.0   (divide by 255)
+3. Split:  80% train,  20% validation  (random_state=42 for reproducibility)
+4. Reshape for Perceptron:  (N, 784) → (N, 28, 28)
+   Reshape for CNN:         (N, 784) → (N, 28, 28, 1)   ← the 1 = grayscale channel
+5. One-hot encode labels:   digit 3  → [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+```
+
+### Model 1 — Perceptron (Baseline)
+
+```
+Input (28×28)
+   ↓
+Flatten  →  784 numbers
+   ↓
+Dense(10, softmax)  →  10 probabilities, one per digit
+```
+
+- Optimizer: SGD
+- Loss: categorical crossentropy
+- Epochs: 10, batch size: 32
+- No hidden layers — purely linear, no spatial awareness
+- Purpose: set a floor. CNN must beat this.
+
+### Model 2 — CNN
+
+```
+Input (28×28×1)
+   ↓
+Conv2D(32, 3×3, relu, padding=same)  →  28×28×32
+MaxPooling2D(2×2)                    →  14×14×32
+Dropout(0.25)
+   ↓
+Conv2D(64, 3×3, relu, padding=same)  →  14×14×64
+MaxPooling2D(2×2)                    →  7×7×64
+Dropout(0.25)
+   ↓
+Flatten  →  3136 numbers (7 × 7 × 64)
+Dense(128, relu)
+Dropout(0.5)
+Dense(10, softmax)  →  10 probabilities
+```
+
+- Optimizer: Adam
+- Loss: categorical crossentropy
+- Epochs: 10, batch size: 64
+
+### Generated Images
+
+All plots are saved to the `images/` folder automatically:
+
+| File                                | What it shows                                               |
+| ----------------------------------- | ----------------------------------------------------------- |
+| `perceptron_training_history.png`   | Accuracy and loss curves across 10 epochs (Perceptron)      |
+| `perceptron_confusion_matrix.png`   | 10×10 heatmap of which digits get confused (Perceptron)     |
+| `perceptron_sample_predictions.png` | 10 sample images with true vs predicted labels (Perceptron) |
+| `cnn_training_history.png`          | Accuracy and loss curves across 10 epochs (CNN)             |
+| `cnn_confusion_matrix.png`          | 10×10 heatmap of which digits get confused (CNN)            |
+| `cnn_sample_predictions.png`        | 10 sample images with true vs predicted labels (CNN)        |
+| `model_comparison_accuracy.png`     | Bar chart comparing validation accuracy of both models      |

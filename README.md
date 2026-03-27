@@ -6,9 +6,10 @@ This repo is where I'm documenting everything I learn about Deep Learning — in
 
 ## What's in here
 
-| Folder                       | What it covers      |
-| ---------------------------- | ------------------- |
-| `Artificial_Neural_Network/` | ANN basics and code |
+| Folder                          | What it covers                                     |
+| ------------------------------- | -------------------------------------------------- |
+| `Artificial_Neural_Network/`    | ANN basics and code — binary and multi-class       |
+| `Convolutional_Neural_Network/` | CNN theory and code — handwritten digit classifier |
 
 ---
 
@@ -125,9 +126,12 @@ That's why we move to full ANNs with better activation functions.
 - [x] Second ANN model — multi-class classification (see `iris_species_classifier.py`)
 - [x] Black box vs white box models (see `blackbox_vs_whitebox.md`)
 - [ ] Backpropagation deep dive
-- [ ] Dropout — how to stop the model from memorising
 - [ ] Learning rate schedules
 - [ ] Batch normalization
+- [x] Why ANNs fail on images (see `Convolutional_Neural_Network/notes.md`)
+- [x] CNN theory — filters, feature maps, pooling, padding, strides, flattening (see `Convolutional_Neural_Network/notes.md`)
+- [x] Dropout — how to stop the model from memorising (see `Convolutional_Neural_Network/notes.md` Section 17)
+- [x] CNN model — handwritten digit classifier, Perceptron vs CNN comparison (see `Convolutional_Neural_Network/cnn.py`)
 
 ---
 
@@ -240,13 +244,18 @@ _Train vs validation accuracy — if both go up together the model is learning w
 
 ## Files in this repo
 
-| File                                                   | What it is                                              |
-| ------------------------------------------------------ | ------------------------------------------------------- |
-| `Artificial_Neural_Network/plant_water_predictor.py`   | First ANN — binary classification, plant watering       |
-| `Artificial_Neural_Network/iris_species_classifier.py` | Second ANN — multi-class classification, Iris species   |
-| `Artificial_Neural_Network/Iris.csv`                   | Dataset used by iris_species_classifier.py              |
-| `Artificial_Neural_Network/notes.md`                   | Core ANN theory — forward prop, backprop, training loop |
-| `Artificial_Neural_Network/activation_functions.md`    | All activation functions with graphs and formulas       |
-| `Artificial_Neural_Network/loss_functions.md`          | All loss functions with graphs and pros/cons            |
-| `Artificial_Neural_Network/optimizers.md`              | All optimizers with graphs, formulas and code examples  |
-| `Artificial_Neural_Network/blackbox_vs_whitebox.md`    | What black box and white box models mean in plain words |
+| File                                                   | What it is                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------- |
+| `Artificial_Neural_Network/plant_water_predictor.py`   | First ANN — binary classification, plant watering             |
+| `Artificial_Neural_Network/iris_species_classifier.py` | Second ANN — multi-class classification, Iris species         |
+| `Artificial_Neural_Network/Iris.csv`                   | Dataset used by iris_species_classifier.py                    |
+| `Artificial_Neural_Network/notes.md`                   | Core ANN theory — forward prop, backprop, training loop       |
+| `Artificial_Neural_Network/activation_functions.md`    | All activation functions with graphs and formulas             |
+| `Artificial_Neural_Network/loss_functions.md`          | All loss functions with graphs and pros/cons                  |
+| `Artificial_Neural_Network/optimizers.md`              | All optimizers with graphs, formulas and code examples        |
+| `Artificial_Neural_Network/blackbox_vs_whitebox.md`    | What black box and white box models mean in plain words       |
+| `Convolutional_Neural_Network/cnn.py`                  | CNN project — Perceptron baseline + CNN, training, evaluation |
+| `Convolutional_Neural_Network/data/train.csv`          | 42,000 labelled handwritten digit images (Kaggle MNIST)       |
+| `Convolutional_Neural_Network/data/test.csv`           | 28,000 unlabelled digit images (Kaggle submission format)     |
+| `Convolutional_Neural_Network/notes.md`                | Full CNN theory — filters, pooling, padding, dropout and more |
+| `Convolutional_Neural_Network/README.md`               | CNN project overview — models, architecture, how to run       |

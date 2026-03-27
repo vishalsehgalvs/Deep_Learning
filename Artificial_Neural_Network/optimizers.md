@@ -994,5 +994,6 @@ Adam        →  Momentum + RMSProp together  →  best of everything
 ## Coming Next
 
 - [ ] Learning rate schedules (how to reduce learning rate over time)
-- [ ] Regularization — dropout, L1, L2
+- [x] Dropout regularisation — see `Convolutional_Neural_Network/notes.md` Section 17
+- [ ] L1 and L2 regularisation techniques
 - [ ] Batch normalization

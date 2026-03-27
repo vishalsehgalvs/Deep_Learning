@@ -269,7 +269,7 @@ The whole thing boils down to: **make a guess → see how wrong you are → corr
 - [x] Second ANN — multi-class classification — see `iris_species_classifier.py`
 - [x] Black box vs white box models — see `blackbox_vs_whitebox.md`
 - [ ] Backpropagation deep dive
-- [ ] Dropout — how to stop the model from memorising
+- [x] Dropout — how to stop the model from memorising — see `Convolutional_Neural_Network/notes.md` Section 17
 - [ ] Learning rate schedules
 - [ ] Batch normalization
 
