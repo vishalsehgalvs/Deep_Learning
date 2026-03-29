@@ -10,6 +10,16 @@ But some tasks are completely different. The input is not a fixed table of numbe
 
 For tasks like these, a standard ANN breaks down. That's where an RNN (Recurrent Neural Network) comes in.
 
+```
+Task type                 Best tool         Why
+─────────────────────────────────────────────────────────────────
+Predict house price       ANN               Fixed input — just numbers
+Classify an image         CNN               Spatial patterns in pixels
+Classify a sentence       RNN               Order of words matters
+Predict next word         RNN               Context builds up over time
+─────────────────────────────────────────────────────────────────
+```
+
 ---
 
 ## 2. What Is Sequential Data?
@@ -32,13 +42,24 @@ It means nothing. The sequence — the order — is what carries the meaning.
 
 Other examples where order matters in the same way:
 
-| Type of data              | What makes it sequential                                         |
-| ------------------------- | ---------------------------------------------------------------- |
-| A sentence or review      | Words must appear in order — shuffle them and meaning is lost    |
-| A person's salary history | Salary at age 22, 25, 28, 30 — the progression over time matters |
-| Location tracking         | Where someone was at 9am, 10am, 11am — order tells the story     |
+| Type of data       | Example values                | Why order matters                          |
+| ------------------ | ----------------------------- | ------------------------------------------ |
+| Sentence or review | "I did not enjoy this"        | Swap "not" and "enjoy" — meaning changes   |
+| Salary history     | 22k → 28k → 35k → 50k         | The progression over time tells a story    |
+| Location tracking  | Home → Office → Gym → Home    | Order shows the route, not just the places |
+| Music notes        | C, E, G, E, C                 | Change the order and the melody is gone    |
+| Stock prices       | Mon $100 → Tue $102 → Wed $98 | Trend only visible in order                |
 
 The key point: **you cannot treat each item in isolation**. Item 5 in the sequence means something different depending on what came before it.
+
+```
+Example — same words, different order, completely different meaning:
+
+  "The food was good, not bad"   →  Positive
+  "The food was bad, not good"   →  Negative
+
+  Same words. Order changed. Meaning flipped.
+```
 
 ---
 
@@ -53,34 +74,68 @@ When you try to use an ANN on text or any sequential data, you immediately hit f
 A review written by one person might be 10 words long. Another might be 300 words long. An ANN has a fixed number of input neurons — it cannot handle different-sized inputs. You would need a separate model for every possible sentence length, which is impossible.
 
 ```
-"Good film"                        →  2 words
-"This was one of the best films I have ever seen in my life"  →  15 words
+  "Good film"                                           →  2 words
+  "This was one of the best films I have ever seen"     →  11 words
 
-ANN input layer:  [●  ●  ●  ●  ●  ●]   ← fixed size, cannot change
+  ANN input layer:  [ ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ● ]
+                      └────────────── fixed size ─────────────────────────────────────┘
+                                          ↑
+                      What if a new sentence has 25 words? ANN breaks.
 ```
 
 ### Problem 2 — Massive Computational Load
 
-To give an ANN any chance of understanding long sentences, you'd have to make the input layer enormous — one neuron per word, across the entire possible vocabulary. That's potentially tens of thousands of input neurons, each connected to a hidden layer. The number of weights explodes instantly.
+To give an ANN any chance of understanding long sentences, you'd have to make the input layer enormous. One neuron per word, across the entire vocabulary — potentially 50,000+ neurons. Each connected to a hidden layer. The number of weights explodes instantly.
+
+```
+  Vocabulary = 50,000 words
+  Hidden neurons = 512
+
+  Weights = 50,000 × 512 = 25,600,000   ← just for one layer
+                                           completely unmanageable
+```
 
 ### Problem 3 — The Prediction Problem
 
-Even if you handled training, there's a problem at test time. When someone submits a new piece of text to your model, it might be longer than anything you trained on. The ANN has no way to deal with an input that doesn't match the exact size it was built for.
+Even if you handled training, there's a problem at test time. When someone submits a new piece of text, it might be longer than anything you trained on. The ANN has no way to deal with an input that doesn't match the exact size it was built for.
+
+```
+  Trained on:  sentences up to 10 words
+  New input:   "I absolutely loved every single moment of this incredibly touching film"  →  12 words
+
+  ANN:  ❌  does not fit the input layer — crashes
+```
 
 ### Problem 4 — Sequence Is Not Maintained (Semantic Meaning Lost)
 
-This is the biggest one. An ANN has no memory of what it saw before the current input. Every input is treated independently.
+This is the biggest problem. An ANN has no memory of what it saw before the current input. Every input is treated independently.
 
 ```
-Sentence: "I did not enjoy the film at all"
+  Sentence: "I did not enjoy the film at all"
 
-ANN sees:  ["I", "did", "not", "enjoy", ...]
-           → Each word processed separately, in isolation
-           → "not" has no relationship to "enjoy" as far as ANN is concerned
-           → Meaning completely lost
+  ANN sees each word in isolation:
+
+  ┌──────┐  ┌─────┐  ┌─────┐  ┌────────┐  ┌─────┐  ┌──────┐
+  │  "I" │  │"did"│  │"not"│  │"enjoy" │  │"the"│  │"film"│  ...
+  └──┬───┘  └──┬──┘  └──┬──┘  └───┬────┘  └──┬──┘  └──┬───┘
+     ↓         ↓         ↓         ↓           ↓         ↓
+  processed  processed  processed  processed  processed  processed
+  alone      alone      alone      alone      alone      alone
+
+  "not" sits right next to "enjoy" — but ANN sees no connection between them.
+  The negation is completely invisible. Meaning is lost.
 ```
 
-The word "not" completely reverses the meaning of "enjoy" — but an ANN cannot know that because it doesn't track the sequence. Remove the word order and you lose the meaning.
+```
+  Summary of ANN's 4 failures on sequential data:
+
+  ┌───────────────────────────────────────────────────────────────┐
+  │  Problem 1  →  Cannot handle variable-length input            │
+  │  Problem 2  →  Too many weights for large vocabularies        │
+  │  Problem 3  →  Breaks on inputs longer than training examples │
+  │  Problem 4  →  No memory — processes each word in isolation   │
+  └───────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -91,43 +146,56 @@ An RNN is a type of neural network designed specifically to handle sequential da
 At each step, the RNN does not just look at the current input. It also looks at what it learned from all the **previous inputs in the sequence**. This memory is called the **hidden state**.
 
 ```
-Normal ANN:
+─────────────────────────────────────────────────────────────────────────
+  Normal ANN — no memory:
 
-  Input → [Network] → Output
-  (no memory, processes each input completely fresh)
+  Input  ──►  [ Hidden Layer ]  ──►  Output
 
+  Every input is treated completely fresh.
+  No knowledge of what came before.
 
-RNN:
+─────────────────────────────────────────────────────────────────────────
+  RNN — has memory (hidden state):
 
-  Input 1 → [RNN] → Output 1
-               ↓
-           Hidden State (memory of step 1)
-               ↓
-  Input 2 → [RNN] → Output 2
-               ↓
-           Hidden State (memory of steps 1 + 2)
-               ↓
-  Input 3 → [RNN] → Output 3
+  Input(t=1)  ──►  [ RNN Cell ]  ──►  Output(t=1)
+                         │
+                    hidden state h1
+                         │
+                         ▼
+  Input(t=2)  ──►  [ RNN Cell ]  ──►  Output(t=2)
+                         │           (h2 knows about t=1 + t=2)
+                    hidden state h2
+                         │
+                         ▼
+  Input(t=3)  ──►  [ RNN Cell ]  ──►  Final Output
+                                       (knows about full sequence)
 
-  (each step carries forward what it learned from all previous steps)
+─────────────────────────────────────────────────────────────────────────
 ```
 
 Think of it like reading a book. When you reach page 50, you understand it because you remember what happened on pages 1–49. You're not reading each page with a blank mind. An RNN does the same — it carries a running memory as it processes each item in the sequence one step at a time.
 
-### The Full Flow
+### The Full Flow — One Sentence, Step by Step
 
 ```
-            ┌─────────────────────────────────────────────────────────┐
-            │                   RNN — Step by Step                    │
-            │                                                         │
-  Word 1 →  │  [Cell] → hidden state h1 ───────────────────────────► │
-            │     ↑                                                   │
-  Word 2 →  │  [Cell] → hidden state h2  (h2 knows about word 1+2) ► │
-            │     ↑                                                   │
-  Word 3 →  │  [Cell] → hidden state h3  (h3 knows about 1+2+3)   ► │
-            │     ↑                                                   │
-  Word N →  │  [Cell] → Final Output  (based on entire sequence)      │
-            └─────────────────────────────────────────────────────────┘
+  Sentence:  "I   did   not   enjoy   the   film"
+
+  ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+  │  "I"    │     │  "did"  │     │  "not"  │     │ "enjoy" │     │  "the"  │     │  "film" │
+  └────┬────┘     └────┬────┘     └────┬────┘     └────┬────┘     └────┬────┘     └────┬────┘
+       │               │               │               │               │               │
+       ▼               ▼               ▼               ▼               ▼               ▼
+  ┌────────┐  h1  ┌────────┐  h2  ┌────────┐  h3  ┌────────┐  h4  ┌────────┐  h5  ┌────────┐
+  │RNN Cell│ ───► │RNN Cell│ ───► │RNN Cell│ ───► │RNN Cell│ ───► │RNN Cell│ ───► │RNN Cell│
+  └────────┘      └────────┘      └────────┘      └────────┘      └────────┘      └────┬───┘
+                                                                                         │
+                                                                                    Final h6
+                                                                                         │
+                                                                                         ▼
+                                                                                   Dense Layer
+                                                                                         │
+                                                                                         ▼
+                                                                                  0.12 → Negative ✓
 ```
 
 The same cell is reused at each step — that's the "recurrent" in RNN. It loops back on itself, carrying memory forward.
@@ -145,22 +213,27 @@ The most basic way to do this is called **One-Hot Encoding**.
 First, you build a vocabulary — a list of every unique word in your dataset. Say your vocabulary has 5 words:
 
 ```
-Vocabulary:
-  Index 0 = "I"
-  Index 1 = "love"
-  Index 2 = "not"
-  Index 3 = "hate"
-  Index 4 = "film"
+  Vocabulary — 5 words:
+
+  Position 0  →  "I"
+  Position 1  →  "love"
+  Position 2  →  "not"
+  Position 3  →  "hate"
+  Position 4  →  "film"
 ```
 
-Each word is turned into an array (a list of numbers) where every position is 0, **except the position that matches that word's index — that one is 1**:
+Each word is turned into an array the same length as the vocabulary. Every position is 0, except the one that matches the word's position — that one is 1:
 
 ```
-"I"     →  [1, 0, 0, 0, 0]
-"love"  →  [0, 1, 0, 0, 0]
-"not"   →  [0, 0, 1, 0, 0]
-"hate"  →  [0, 0, 0, 1, 0]
-"film"  →  [0, 0, 0, 0, 1]
+  Word     One-Hot Vector     Explanation
+  ───────────────────────────────────────────────────────────────
+  "I"    →  [1, 0, 0, 0, 0]  ← position 0 is hot, rest are 0
+  "love" →  [0, 1, 0, 0, 0]  ← position 1 is hot, rest are 0
+  "not"  →  [0, 0, 1, 0, 0]  ← position 2 is hot, rest are 0
+  "hate" →  [0, 0, 0, 1, 0]  ← position 3 is hot, rest are 0
+  "film" →  [0, 0, 0, 0, 1]  ← position 4 is hot, rest are 0
+  ───────────────────────────────────────────────────────────────
+  One word = one vector. Exactly one position is "hot" (1).
 ```
 
 One word = one array. Only one position is "hot" (1), the rest are "cold" (0). That's why it's called **one-hot**.
@@ -170,65 +243,82 @@ One word = one array. Only one position is "hot" (1), the rest are "cold" (0). T
 Once every word is encoded, the sentence becomes a sequence of arrays:
 
 ```
-Sentence: "I love film"
+  Sentence: "I love film"
 
-After one-hot encoding:
-
-  Step 1:  "I"     →  [1, 0, 0, 0, 0]  → fed into RNN cell
-  Step 2:  "love"  →  [0, 1, 0, 0, 0]  → fed into RNN cell (+ memory from step 1)
-  Step 3:  "film"  →  [0, 0, 0, 0, 1]  → fed into RNN cell (+ memory from steps 1+2)
-                                             ↓
-                                        Final output (e.g. "positive sentiment")
+  ┌──────────────────────────────────────────────────────────┐
+  │  Step 1  →  "I"     →  [1, 0, 0, 0, 0]                  │
+  │                              ↓                           │
+  │              fed into RNN cell  +  hidden state [0,0,0]  │
+  │                              ↓                           │
+  │                          h1 produced   (memory of "I")   │
+  ├──────────────────────────────────────────────────────────┤
+  │  Step 2  →  "love"  →  [0, 1, 0, 0, 0]                  │
+  │                              ↓                           │
+  │              fed into RNN cell  +  h1                    │
+  │                              ↓                           │
+  │                          h2 produced   (memory of "I love") │
+  ├──────────────────────────────────────────────────────────┤
+  │  Step 3  →  "film"  →  [0, 0, 0, 0, 1]                  │
+  │                              ↓                           │
+  │              fed into RNN cell  +  h2                    │
+  │                              ↓                           │
+  │                          h3 produced   (memory of "I love film") │
+  │                              ↓                           │
+  │                      Final output  →  "positive"  ✓     │
+  └──────────────────────────────────────────────────────────┘
 ```
-
-The RNN processes the sentence one word at a time, step by step, carrying the hidden state forward at each step until it has seen the entire sentence.
 
 ### Timesteps and Input Features — How the Data Is Actually Structured
 
-When you feed a sentence into an RNN, the data is organised into **timesteps**. Each timestep is one position in the sequence — word 1 is timestep 1, word 2 is timestep 2, and so on. At each timestep, the RNN receives the **input feature vector** for that word (its one-hot encoded array) plus the **hidden state** carried forward from the previous step.
+When you feed a sentence into an RNN, the data is organised into **timesteps**. Each timestep is one position in the sequence — word 1 is timestep 1, word 2 is timestep 2, and so on.
 
 Let's walk through **"I love film"** step by step.
 
 ```
-Vocabulary (5 words):
-  Index:  0="I"   1="love"   2="not"   3="hate"   4="film"
+  Vocabulary (5 words):
+    Position:  0="I"   1="love"   2="not"   3="hate"   4="film"
 
-Sentence:   "I      love    film"
-Timestep:    t=1     t=2     t=3
+  Sentence:    "I         love      film"
+  Timestep:    t=1        t=2       t=3
 ```
 
 At each timestep the RNN gets one input feature vector and produces an updated hidden state:
 
 ```
-Timestep 1  (word = "I"):
-  Input features:   [1, 0, 0, 0, 0]   ← one-hot for "I"
-  Hidden state in:  [0, 0, 0, 0, 0]   ← starts as all zeros — no memory yet
-  Hidden state out: h1                ← memory now holds "I"
-
-Timestep 2  (word = "love"):
-  Input features:   [0, 1, 0, 0, 0]   ← one-hot for "love"
-  Hidden state in:  h1                ← memory of "I" carried forward
-  Hidden state out: h2                ← memory now holds "I love"
-
-Timestep 3  (word = "film"):
-  Input features:   [0, 0, 0, 0, 1]   ← one-hot for "film"
-  Hidden state in:  h2                ← memory of "I love" carried forward
-  Hidden state out: h3                ← memory now holds "I love film"
-                         ↓
-                   Final output  →  "positive sentiment"
+  ┌────────────────────────────────────────────────────────────────────────────┐
+  │  Timestep 1  (word = "I"):                                                 │
+  │    Input features:   [1, 0, 0, 0, 0]   ← one-hot for "I"                  │
+  │    Hidden state in:  [0, 0, 0, 0, 0]   ← blank — no memory yet            │
+  │    Hidden state out: h1                ← memory now holds "I"              │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │  Timestep 2  (word = "love"):                                              │
+  │    Input features:   [0, 1, 0, 0, 0]   ← one-hot for "love"               │
+  │    Hidden state in:  h1                ← memory of "I" carried in         │
+  │    Hidden state out: h2                ← memory now holds "I love"         │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │  Timestep 3  (word = "film"):                                              │
+  │    Input features:   [0, 0, 0, 0, 1]   ← one-hot for "film"               │
+  │    Hidden state in:  h2                ← memory of "I love" carried in    │
+  │    Hidden state out: h3                ← memory now holds "I love film"    │
+  │                           ↓                                                │
+  │                   Final output  →  "positive sentiment"  ✓                │
+  └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 The block of data fed into the RNN has the shape **[timesteps × features]**:
 
 ```
-Shape:  [ 3 timesteps × 5 features ]
+  Shape:  [ 3 timesteps  ×  5 features ]
 
-  Row 1 (t=1)  →  [1, 0, 0, 0, 0]   ← "I"
-  Row 2 (t=2)  →  [0, 1, 0, 0, 0]   ← "love"
-  Row 3 (t=3)  →  [0, 0, 0, 0, 1]   ← "film"
+  ┌──────────────────────────────────────┐
+  │  Row 1 (t=1)  →  [1, 0, 0, 0, 0]    │  ← "I"
+  │  Row 2 (t=2)  →  [0, 1, 0, 0, 0]    │  ← "love"
+  │  Row 3 (t=3)  →  [0, 0, 0, 0, 1]    │  ← "film"
+  └──────────────────────────────────────┘
+       ↑ RNN reads one row at a time, top to bottom
 ```
 
-The RNN reads one row at a time, top to bottom. At every row it updates the hidden state and moves to the next. By the last row it has seen the entire sentence in order.
+The RNN reads one row at a time. At every row it updates the hidden state and moves to the next. By the last row it has seen the entire sentence in order.
 
 ---
 
@@ -239,8 +329,18 @@ To build and train an RNN in Python we use **Keras** — a high-level deep learn
 Think of TensorFlow as the engine room — it handles all the heavyweight maths (matrix multiplications, gradients, GPU processing). Keras is the friendly layer on top of it — you describe the model in simple, readable steps without writing any of the low-level maths yourself.
 
 ```
-TensorFlow  =  the engine     (fast, powerful — handles all maths under the hood)
-Keras       =  the interface   (simple — you just stack layers and go)
+  ┌──────────────────────────────────────────────────────────────┐
+  │                   What each layer does                       │
+  │                                                              │
+  │   You (Keras)  ──────────────────────────────────────────►   │
+  │   "Stack a SimpleRNN of size 64, then a Dense layer"         │
+  │                                                              │
+  │   TensorFlow  ◄──────────────────────────────────────────    │
+  │   Runs all the matrix maths, backpropagation, GPU batches    │
+  │                                                              │
+  │   TensorFlow  =  the engine  (fast, powerful, invisible)     │
+  │   Keras       =  the remote control  (you just press buttons)│
+  └──────────────────────────────────────────────────────────────┘
 ```
 
 Keras comes built into TensorFlow so you don't install them separately:
@@ -256,7 +356,8 @@ Building an RNN in Keras follows the same pattern as the ANN and CNN projects �
 
 ```python
 model = keras.Sequential([
-    keras.layers.SimpleRNN(64, input_shape=(3, 5)),
+    keras.layers.Embedding(vocab_size, embedding_size, input_length=max_length),
+    keras.layers.SimpleRNN(rnn_units),
     keras.layers.Dense(1, activation='sigmoid')
 ])
 ```
@@ -264,21 +365,29 @@ model = keras.Sequential([
 Breaking this down:
 
 ```
-keras.Sequential([...])
-  → Stack of layers, one after another — same as ANN and CNN
-
-SimpleRNN(64, input_shape=(3, 5))
-  → The recurrent layer — loops through the sequence one timestep at a time
-  → 64  = size of the hidden state (how much memory the cell carries per step)
-  → input_shape = (3, 5)
-                   ↑  ↑
-                   |  └── 5 features (vocabulary size = 5 words)
-                   └───── 3 timesteps (sentence has 3 words)
-
-Dense(1, activation='sigmoid')
-  → Final output layer — same as ANN
-  → 1 neuron + Sigmoid → outputs a probability between 0 and 1
-  → Good for binary tasks like sentiment (positive / negative)
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │  Layer 1 — Embedding                                                   │
+  │                                                                        │
+  │  Embedding(vocab_size, embedding_size, input_length=max_length)        │
+  │    → converts word index numbers into dense vectors                    │
+  │    → smarter than one-hot — similar words get similar vectors          │
+  │    → e.g. "good" and "great" will be close in embedding space          │
+  │    → output shape per sentence:  [max_length × embedding_size]          │
+  ├────────────────────────────────────────────────────────────────────────┤
+  │  Layer 2 — SimpleRNN                                                   │
+  │                                                                        │
+  │  SimpleRNN(rnn_units)                                                  │
+  │    → the recurrent layer — loops through the sequence step by step     │
+  │    → at each timestep: takes current word vector + previous memory     │
+  │    → rnn_units = size of hidden state (how much memory the cell keeps) │
+  │    → return_sequences=False (default) → only outputs final hidden state │
+  ├────────────────────────────────────────────────────────────────────────┤
+  │  Layer 3 — Dense (output)                                              │
+  │                                                                        │
+  │  Dense(1, activation='sigmoid')                                        │
+  │    → takes final hidden state as input                                 │
+  │    → sigmoid squishes output to 0–1 → 1 = positive, 0 = negative      │
+  └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Batch Size — How Many Sentences at Once
@@ -286,59 +395,81 @@ Dense(1, activation='sigmoid')
 When training, you don't feed sentences to the RNN one by one — that would be extremely slow. Instead you group them into **batches** and process several sentences at the same time.
 
 ```
-Batch size = 32  →  32 sentences processed together in one go
-Batch size = 1   →  one sentence at a time (slowest, only useful for tiny datasets)
+  Batch size = 32  →  32 sentences processed together in one go  (faster)
+  Batch size = 8   →  8 sentences at a time  (smaller = more updates per epoch)
+  Batch size = 1   →  one sentence at a time  (very slow — updated every sentence)
+
+  Analogy: marking exam papers
+    One at a time = slow, constant feedback
+    Batch of 32   = mark 32 at once, then update your marking scheme
 ```
 
 The full shape of the data block passed to Keras is:
 
 ```
-Shape:  [ batch_size  ×  timesteps  ×  features ]
+  Shape:  [ batch_size  ×  timesteps  ×  features ]
 
-Example with batch_size=32, 3-word sentences, vocabulary of 5:
-  →  [ 32  ×  3  ×  5 ]
-      ↑       ↑     ↑
-      |       |     └── 5 numbers per word (one-hot vector)
-      |       └──────── 3 words per sentence
-      └──────────────── 32 sentences processed at once
+  Example:  batch_size=8,  max_length=10,  embedding_size=16
+
+  ┌──────────────────────────────────────────────────────┐
+  │  8 sentences                                         │
+  │  each sentence:  10 timesteps (words)                │
+  │  each word:      16 numbers (embedding vector)       │
+  │                                                      │
+  │  Full shape:  [ 8  ×  10  ×  16 ]                   │
+  │                 ↑     ↑      ↑                       │
+  │                 │     │      └── 16 numbers per word │
+  │                 │     └───────── 10 words per sentence│
+  │                 └─────────────── 8 sentences at once │
+  └──────────────────────────────────────────────────────┘
 ```
 
-If you don't set a batch size, Keras defaults to processing each sentence one at a time — which works but is much slower.
-
-The full pipeline from raw sentence to prediction:
+### Full Pipeline — From Raw Text to Prediction
 
 ```
-Raw text  "I love film"
-        ↓
-Split into words  →  ["I", "love", "film"]
-        ↓
-One-hot encode   →  [[1,0,0,0,0], [0,1,0,0,0], [0,0,0,0,1]]
-        ↓
-Organise into shape [3 × 5]  (timesteps × features)
-        ↓
-Feed into SimpleRNN  →  processes t=1, t=2, t=3, carries hidden state
-        ↓
-Dense output layer
-        ↓
-0.87  →  positive sentiment  ✓
+  Raw text sentence:  "I love this film"
+           ↓
+  Tokenise (split into words and assign number IDs)
+    →  [2, 7, 14, 5]
+           ↓
+  Pad to fixed length (max_length = 10)
+    →  [0, 0, 0, 0, 0, 0, 2, 7, 14, 5]
+           ↓
+  Embedding layer  (convert IDs → dense vectors)
+    →  shape: [10 × 16]
+           ↓
+  SimpleRNN  (process one timestep at a time, carry hidden state)
+    →  t=1 → t=2 → ... → t=10 → final hidden state
+           ↓
+  Dense + Sigmoid
+           ↓
+  Output:  0.87  →  Positive sentiment  ✓
 ```
 
 ---
 
 ## 7. Use Cases of RNNs
 
-RNNs shine on any task where the input or output is a sequence — especially text. The two main use cases noted:
+RNNs shine on any task where the input or output is a sequence — especially text. The two main use cases:
 
 ### Sentiment Analysis
 
 Given a piece of text (a product review, a tweet, a comment), predict whether the sentiment is positive or negative.
 
 ```
-Input:   "The service was absolutely terrible and I will never return"
-Output:  Negative sentiment
-
-Input:   "Had an amazing experience — will definitely come back"
-Output:  Positive sentiment
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │  Input:   "The service was absolutely terrible and I will never return"  │
+  │                                   ↓                                      │
+  │                          RNN reads word by word                          │
+  │                                   ↓                                      │
+  │  Output:  Negative  (confidence: 0.95)                                   │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │  Input:   "Had an amazing experience — will definitely come back"        │
+  │                                   ↓                                      │
+  │                          RNN reads word by word                          │
+  │                                   ↓                                      │
+  │  Output:  Positive  (confidence: 0.91)                                   │
+  └──────────────────────────────────────────────────────────────────────────┘
 ```
 
 The RNN reads the sentence word by word, building up context as it goes. By the time it reaches the last word, its hidden state carries the full meaning of the sentence and it can make a judgment.
@@ -348,12 +479,32 @@ The RNN reads the sentence word by word, building up context as it goes. By the 
 Given the start of a sentence, predict what word comes next — and keep going to complete the sentence.
 
 ```
-Input:   "The weather today is very"
-RNN predicts next word → "hot"  → then "and" → then "sunny" → ...
-Output:  "The weather today is very hot and sunny"
+  ┌────────────────────────────────────────────────────────────────┐
+  │  Input:   "The weather today is very"                          │
+  │                     ↓                                          │
+  │              RNN predicts next word                            │
+  │                     ↓                                          │
+  │  Step 1:  → "hot"       │  Input now: "...is very hot"         │
+  │  Step 2:  → "and"       │  Input now: "...very hot and"        │
+  │  Step 3:  → "sunny"     │  (keeps going until end token)       │
+  │                     ↓                                          │
+  │  Full output:  "The weather today is very hot and sunny"       │
+  └────────────────────────────────────────────────────────────────┘
 ```
 
-The RNN uses its memory of every word it has seen so far to predict the most likely next word.
+Other places where RNNs are / were used:
+
+```
+  Task                       Input              Output
+  ──────────────────────────────────────────────────────────────
+  Sentiment analysis         Sentence           Positive / Negative
+  Text generation            Start of text      Completed text
+  Machine translation        English sentence   French sentence
+  Speech recognition         Audio sequence     Text transcript
+  Time series forecasting    Past stock prices  Next price prediction
+  Video captioning           Video frames       Sentence description
+  ──────────────────────────────────────────────────────────────
+```
 
 ---
 
@@ -364,40 +515,73 @@ RNNs were the go-to approach for NLP tasks for several years. However, they have
 The reason: **Transformers** came along and solved most of the same problems, but much better. Transformers (the architecture behind LLMs like ChatGPT) can process entire sequences at once instead of step by step, handle much longer sequences without losing track, and train far faster on modern hardware.
 
 ```
-Timeline:
+  Model Timeline — NLP history in one diagram:
 
-  ANN  →  could not handle sequences at all
-  RNN  →  could handle sequences (used widely for NLP, 2010s)
-  Transformers / LLMs  →  handle sequences far better (dominant today)
+  ─────────────────────────────────────────────────────────────────────────────
+  1980s–2000s   ANN         Could not handle sequences at all.
+                            Just fixed input → fixed output.
+
+  ~2010s        RNN         Could finally handle sequences!
+                            Word-by-word memory via hidden state.
+                            Widely used for NLP, translation, speech.
+                            Weakness: forgets early words in long sequences.
+
+  ~2017         Transformers  Process the full sequence at once (no step-by-step).
+                            Attention mechanism — every word can "look at" every
+                            other word directly, no forgetting.
+                            Became dominant fast.
+
+  2020–now      LLMs (ChatGPT, GPT-4, Gemini, Claude)
+                            Transformers at massive scale.
+                            RNNs rarely used for mainstream NLP today.
+  ─────────────────────────────────────────────────────────────────────────────
+```
+
+```
+  RNN vs Transformer — quick comparison:
+
+  Feature                  RNN                   Transformer
+  ────────────────────────────────────────────────────────────────
+  Processes sequence       One word at a time    All words at once
+  Memory of early words    Fades with distance   Direct attention
+  Training speed           Slow (sequential)     Fast (parallel)
+  Long sequence handling   Weak                  Strong
+  Used today               Niche uses only       Dominant in NLP
+  ────────────────────────────────────────────────────────────────
 ```
 
 RNNs are still useful to understand because:
 
-- They explain **why sequential processing matters**
-- They are the foundation that led to more advanced models
+- They explain **why sequential processing matters** and how hidden state works
+- They are the foundation that led to LSTMs, GRUs, and eventually Transformers
 - They are still used in some lightweight, resource-constrained settings
 
 ---
 
 ## 9. Quick Reference
 
-| Concept             | What it means                                                                |
-| ------------------- | ---------------------------------------------------------------------------- |
-| Sequential data     | Data where the order of items matters and cannot be changed                  |
-| ANN limitation      | Fixed input size, no memory, loses sequence — fails on text                  |
-| RNN                 | Neural network with a hidden state that carries memory across the sequence   |
-| Hidden state        | The running memory of the RNN — updated at each step                         |
-| Timestep            | One position in the sequence — the RNN processes one timestep at a time      |
-| Input features      | The feature vector (e.g. one-hot array) fed into the RNN at each timestep    |
-| Vectorisation       | Converting words (or any non-numeric data) into numbers before feeding in    |
-| One-hot encoding    | Representing each word as an array with a single 1 and all other positions 0 |
-| TensorFlow          | The deep learning engine — handles all the low-level maths and GPU work      |
-| Keras               | High-level interface on top of TensorFlow — lets you stack layers simply     |
-| SimpleRNN layer     | The Keras layer that processes one timestep at a time and carries memory     |
-| Sentiment analysis  | Classifying whether a piece of text is positive or negative                  |
-| Sentence completion | Predicting the next word(s) given the start of a sentence                    |
-| Transformers / LLMs | Newer architecture that has largely replaced RNNs for most NLP tasks         |
-| Batch size          | How many sentences the RNN processes at once — if not set, one at a time     |
+| Concept             | What it means in plain English                                                |
+| ------------------- | ----------------------------------------------------------------------------- |
+| Sequential data     | Data where the order of items matters — change the order, change the meaning  |
+| ANN limitation      | Fixed input size, no memory, loses sequence — fails on text                   |
+| RNN                 | Neural network with a hidden state that carries memory across the sequence    |
+| Hidden state        | The running memory of the RNN — updated at each timestep                      |
+| Timestep            | One position in the sequence — the RNN processes one timestep at a time       |
+| Input features      | The feature vector (e.g. embedding vector) fed into the RNN at each timestep  |
+| Vectorisation       | Converting words (or any non-numeric data) into numbers before feeding in     |
+| One-hot encoding    | Representing each word as an array with a single 1 and all other positions 0  |
+| Embedding layer     | Smarter than one-hot — maps words to dense vectors where meaning is close     |
+| TensorFlow          | The deep learning engine — handles all the maths and GPU work                 |
+| Keras               | High-level interface on top of TensorFlow — stack layers simply               |
+| SimpleRNN layer     | The Keras layer that processes one timestep at a time and carries memory      |
+| return_sequences    | False = only output final hidden state; True = output hidden state every step |
+| Sentiment analysis  | Classifying whether a piece of text is positive or negative                   |
+| Sentence completion | Predicting the next word(s) given the start of a sentence                     |
+| Transformers / LLMs | Newer architecture — processes entire sequences at once, dominates NLP today  |
+| Batch size          | How many sentences the model processes at once during training                |
+| tanh                | Activation function inside RNN hidden neurons — output range −1 to +1         |
+| Vanishing gradient  | Problem where early words lose influence — basic RNN's biggest weakness       |
+| LSTM / GRU          | Improved RNN variants designed to fix the vanishing gradient problem          |
 
 ---
 
@@ -414,18 +598,31 @@ An RNN is a **recurrent** network. At every step, the hidden layer passes inform
 ![RNN vs Feed Forward network comparison](images/recurrent_neural_network_vs_feedforward_neural_network_training_ppt_slide01.jpg)
 
 ```
-Feed Forward (ANN):              Recurrent (RNN):
+  ─────────────────────────────────────────────────────────────────────────
+  Feed Forward Network (ANN):
 
-  Input                            Input (t=1)
-    ↓                                ↓
-  Hidden Layer  →  Output          Hidden Layer ──┐  (loops back to next step)
-                                     ↓            │
-                                   Output         │
-                                                  ↓
-                                   Input (t=2) + hidden from t=1
-                                     ↓
-                                   Hidden Layer ──┐
-                                     ...         ...
+    Input Layer  →  Hidden Layer  →  Output Layer
+       [x1]            [h]               [y]
+       [x2]        (no looping,          (final
+       [x3]         no memory)           answer)
+
+  Data flows left to right. That's it. No memory of previous inputs.
+  ─────────────────────────────────────────────────────────────────────────
+  Recurrent Network (RNN):
+
+    Input(t=1) → [ Hidden Layer ] → Output
+                       │    ↑
+                       └────┘   ← hidden state loops back to itself
+                       (memory)
+                         ↓
+    Input(t=2) → [ Hidden Layer ] → Output
+                       │    ↑
+                       └────┘
+                         ...
+
+  The hidden layer feeds its own output back in at the next timestep.
+  That self-loop is the "recurrence".
+  ─────────────────────────────────────────────────────────────────────────
 ```
 
 ### The Hidden Layer — The Heart of the RNN
@@ -437,21 +634,41 @@ In an RNN, the hidden layer does more than just process the current input — it
 3. Combines them, runs an activation function, and produces a new hidden state
 
 ```
-new hidden state = tanh( (current input × weights_input) + (previous hidden × weights_hidden) + bias )
-```
+  Formula inside the RNN hidden neuron:
 
-In plain terms: **new memory = tanh( what I see now + what I already remembered + bias )**
+  new hidden state = tanh( (current input × W_input) + (previous hidden × W_hidden) + bias )
+
+  In plain English:
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │  new memory  =  tanh(  what I see now  +  what I already remembered  ) │
+  └────────────────────────────────────────────────────────────────────────┘
+```
 
 ### tanh — The Activation Function Inside the Hidden Neurons
 
 The default activation function inside an RNN's hidden neurons is **tanh** (hyperbolic tangent). It squishes any number into a range between −1 and +1:
 
 ```
-tanh output range:
+  tanh output — what each value means:
 
-  Strong signal one way   →  close to  +1
-  No signal               →         0
-  Strong signal other way →  close to  −1
+  Input to tanh    Output    Meaning
+  ──────────────────────────────────────────────────────
+  Very large +ve   ≈ +1      Strong positive signal
+  Around 0          ≈ 0      Neutral — no signal
+  Very large -ve   ≈ -1      Strong negative signal
+  ──────────────────────────────────────────────────────
+
+  Visual:
+
+  +1 ─────────────────────────────    ← ceiling
+         ╱
+        ╱
+  ─────╱─────────────────────────     ← passes through 0
+      ╱
+     ╱
+  -1 ─────────────────────────────    ← floor
+
+  Input:   -∞ ───────────────────── +∞
 ```
 
 This −1 to +1 range works better for recurrent networks than Sigmoid (0 to 1) because it lets the hidden state carry both positive and negative signals, which helps gradients flow better during training.
@@ -461,82 +678,233 @@ This −1 to +1 range works better for recurrent networks than Sigmoid (0 to 1) 
 Before the first word is processed, the RNN has no memory of anything. So the hidden state is initialised as all zeros at the very start of every sentence.
 
 ```
-Before t=1:   hidden state = [0, 0, 0, ..., 0]   ← blank memory, nothing seen yet
-
-After  t=1:   hidden state = h1                  ← memory of word 1
-After  t=2:   hidden state = h2                  ← memory of words 1 + 2
-...
-After  t=N:   hidden state = hN                  ← full sentence stored in memory
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Before t=1:   hidden = [0, 0, 0, ..., 0]  ← blank, nothing seen │
+  │  After  t=1:   hidden = h1                 ← memory of word 1    │
+  │  After  t=2:   hidden = h2                 ← memory of words 1+2  │
+  │  After  t=3:   hidden = h3                 ← memory of words 1+2+3│
+  │    ...                                                            │
+  │  After  t=N:   hidden = hN                 ← full sentence stored  │
+  └──────────────────────────────────────────────────────────────────┘
 ```
 
 ### A Worked Example — "You are good"
 
 Say we want to classify the sentiment of the sentence **"You are good"**. Here's exactly what happens step by step.
 
-First, each word gets turned into a vector (using word embeddings — explained below):
+First, each word gets turned into a vector (using word embeddings or one-hot encoding):
 
 ```
-"you"  →  [1, 0, 0, 0, 0]
-"are"  →  [0, 1, 0, 0, 0]
-"good" →  [0, 0, 1, 0, 0]
+  "you"  →  [1, 0, 0, 0, 0]
+  "are"  →  [0, 1, 0, 0, 0]
+  "good" →  [0, 0, 1, 0, 0]
 ```
 
-These vectors are fed into the hidden layer one word at a time. Say the hidden layer has 3 neurons:
+These vectors are fed into the hidden layer one word at a time. Say the hidden layer has 3 neurons (rnn_units = 3):
 
 ```
-Timestep t=1  →  "you" vector  +  hidden state [0, 0, 0]  (blank start)
-                  formula:  tanh( [1,0,0,0,0] × W  +  [0,0,0] × W_hidden  +  bias )
-                  output:   h1  =  [some numbers]     ← memory now holds "you"
-
-Timestep t=2  →  "are" vector  +  hidden state h1  (memory of "you")
-                  formula:  tanh( [0,1,0,0,0] × W  +  h1 × W_hidden  +  bias )
-                  output:   h2  =  [some numbers]     ← memory now holds "you are"
-
-Timestep t=3  →  "good" vector  +  hidden state h2  (memory of "you are")
-                  formula:  tanh( [0,0,1,0,0] × W  +  h2 × W_hidden  +  bias )
-                  output:   h3  =  [some numbers]     ← memory now holds "you are good"
+  ┌────────────────────────────────────────────────────────────────────────────┐
+  │  t=1  →  "you"                                                             │
+  │    Input:   [1, 0, 0, 0, 0]                                                │
+  │    Hidden:  [0, 0, 0]   ← blank start                                      │
+  │    Formula: tanh( [1,0,0,0,0] × W  +  [0,0,0] × W_hidden  +  bias )       │
+  │    Output:  h1 = [a, b, c]             ← now knows "you"                   │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │  t=2  →  "are"                                                             │
+  │    Input:   [0, 1, 0, 0, 0]                                                │
+  │    Hidden:  h1 = [a, b, c]   ← memory of "you" carried in                 │
+  │    Formula: tanh( [0,1,0,0,0] × W  +  h1 × W_hidden  +  bias )            │
+  │    Output:  h2 = [d, e, f]             ← now knows "you are"               │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │  t=3  →  "good"                                                            │
+  │    Input:   [0, 0, 1, 0, 0]                                                │
+  │    Hidden:  h2 = [d, e, f]   ← memory of "you are" carried in             │
+  │    Formula: tanh( [0,0,1,0,0] × W  +  h2 × W_hidden  +  bias )            │
+  │    Output:  h3 = [g, h, i]             ← now knows "you are good"          │
+  └────────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+                          h3 passed to Dense layer
+                                    ↓
+                           0.92  →  Positive  ✓
 ```
 
 ### Output Only Comes After the Last Timestep
 
-The hidden layer does NOT send output to the next layer after each word. It processes every word silently, updating its memory each time. Only after all timesteps are finished does it pass the final hidden state forward to the Dense output layer.
+The hidden layer does NOT send output to the next layer after each word. It processes every word silently, updating its memory each time. Only after all timesteps are done does it pass the final hidden state forward to the Dense output layer.
 
 ```
-t=1  →  hidden layer updates silently        (no output passed forward yet)
-t=2  →  hidden layer updates silently        (no output passed forward yet)
-t=3  →  hidden layer updates silently        (no output passed forward yet)
-                        ↓
-             all timesteps finished
-                        ↓
-         h3 passed forward to Dense output layer
-                        ↓
-             0.89  →  positive sentiment  ✓
-```
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │  t=1  →  hidden updates  →  nothing passed forward yet                │
+  │  t=2  →  hidden updates  →  nothing passed forward yet                │
+  │  t=3  →  hidden updates  →  nothing passed forward yet                │
+  │                 ↓                                                      │
+  │       all timesteps finished                                           │
+  │                 ↓                                                      │
+  │   h3 (final hidden state) → Dense layer → output                      │
+  │                 ↓                                                      │
+  │         0.92  →  positive  ✓                                          │
+  └────────────────────────────────────────────────────────────────────────┘
 
-In Keras this is controlled by `return_sequences=False` on the `SimpleRNN` layer — "False" means: send me only the final hidden state, after the last word.
+  In Keras:   SimpleRNN(units, return_sequences=False)
+              ↑
+              False means: give me only the last hidden state
+              True  means: give me hidden state after every timestep
+```
 
 ### Why It's Called "Recurrent" — The Same Weights Used Again and Again
 
-Here is the key insight. The hidden layer uses the **exact same set of weights at every single timestep**. The same `W` and `W_hidden` that process word 1 are the same weights used at word 2, word 3, and every other word in the sentence.
+The hidden layer uses the **exact same set of weights at every single timestep**. The same W and W_hidden that process word 1 are the same weights used at word 2, word 3, and every other word.
 
-These weights are applied again and again at each step, looping back — that is the **recurrence**. That's why it's called a Recurrent Neural Network.
-
-```
-t=1  →  W, W_hidden applied
-t=2  →  same W, same W_hidden applied again
-t=3  →  same W, same W_hidden applied again
-  ↑
-  "recurrent" = the same weights are reused at every step, looping back
-```
-
-### Memory Limit of a Basic RNN
-
-A basic RNN starts to forget earlier words when the sentence gets too long — roughly beyond **10 words**, the influence of early words on the hidden state fades away. This is called the **vanishing gradient problem** and it is one of the main weaknesses of a plain RNN.
+These weights are applied again and again at each step, looping back — that is the **recurrence**.
 
 ```
-Short sentence (≤ ~10 words):  RNN handles it well
-Long sentence   (> ~10 words):  RNN starts forgetting what it saw early on
-                                 → needs LSTM or GRU to fix this (covered next)
+  t=1  →  W applied once    (word 1 processed)
+  t=2  →  W applied again   (word 2 processed)
+  t=3  →  W applied again   (word 3 processed)
+   ↑
+   The same W is reused at every step — that's why it's called RECURRENT.
+
+  Analogy: a rubber stamp
+    You press the same stamp at each step.
+    The paper (hidden state) carries forward the impression from every press.
+```
+
+---
+
+## 11. Problems With a Basic RNN
+
+A basic RNN works well on short sequences but breaks down on longer ones. Here are the five main problems:
+
+### Problem 1 — Weak Long-Term Memory
+
+The hidden state is rewritten at every timestep. When a sentence gets long, the hidden state at the end is mostly shaped by the recent words — the early words have been diluted or completely overwritten.
+
+```
+  Sentence: "The food was absolutely amazing but the service at the counter was slow"
+
+  By the time the RNN reaches "slow":
+    → It clearly remembers "service was slow"  ✓
+    → But "food was amazing" from earlier is nearly gone  ✗
+
+  The RNN only reliably remembers the last ~5–10 words.
+```
+
+### Problem 2 — Vanishing Gradient
+
+During training, the model learns by sending error signals backwards through time (backpropagation through time). But in a basic RNN, those signals get multiplied together at each timestep. If the multiplied values are smaller than 1, they shrink rapidly as they travel back.
+
+```
+  Error signal travelling backwards:
+
+  t=10 → t=9 → t=8 → t=7 → ... → t=1
+
+  Each step multiplies the signal by a small number (e.g. 0.5):
+
+  0.5 × 0.5 × 0.5 × 0.5 × 0.5 × 0.5 × 0.5 × 0.5 × 0.5 = 0.002
+
+  By t=1 the signal is almost 0 → early parts of the sequence
+  barely get updated → they stop contributing to learning at all.
+
+  This is the vanishing gradient problem.
+```
+
+### Problem 3 — Exploding Gradient
+
+The opposite can also happen. If the multiplied values are larger than 1, the error signal grows exponentially as it travels backwards.
+
+```
+  Each step multiplies the signal by a large number (e.g. 2.0):
+
+  2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 = 512
+
+  By t=1 the signal is enormous → weights get updated with
+  massive values → training goes unstable → model diverges.
+
+  Fix: gradient clipping (cap the gradient at a max value before applying it)
+```
+
+### Problem 4 — No Long-Range Dependencies
+
+Because of weak memory and vanishing gradients, a basic RNN cannot connect information that is far apart in the sequence.
+
+```
+  Example — long-range dependency:
+
+  "The cat, which had been sitting on the windowsill all morning, was hungry"
+    ↑                                                                    ↑
+   subject                                                           predicate
+   ("cat")                                                         ("was hungry")
+
+  12 words apart. By the time the RNN reaches "was hungry",
+  it has mostly forgotten "cat". It cannot learn this connection.
+```
+
+### Problem 5 — Sequential Processing Is Slow
+
+The RNN must process one word at a time and wait for the hidden state before starting the next step — it cannot be parallelised.
+
+```
+  RNN:          t=1 → t=2 → t=3 → ... → t=N   (must go in order, one at a time)
+  Transformer:  all timesteps processed in parallel  →  much faster training
+```
+
+```
+  Summary — the 5 weaknesses of a basic RNN:
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │  1. Weak long-term memory   → forgets early words in long sequences      │
+  │  2. Vanishing gradient      → early steps barely learn during training   │
+  │  3. Exploding gradient      → training goes unstable on long sequences   │
+  │  4. No long-range capture   → can't connect things far apart in a text   │
+  │  5. Sequential and slow     → cannot run timesteps in parallel           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  → LSTM and GRU were invented to solve problems 1, 2, and 4
+  → Transformers solved all five
+```
+
+---
+
+## 12. LSTM and GRU — What Comes Next
+
+A basic RNN's weakness is its simple hidden state — it gets overwritten every step and early information fades fast.
+
+**LSTM (Long Short-Term Memory)** and **GRU (Gated Recurrent Unit)** are improved versions of the RNN that add **gates** — control mechanisms that decide what to remember, what to forget, and what to pass forward.
+
+```
+  Basic RNN cell:
+
+    hidden state in  ──►  tanh(input + hidden)  ──►  hidden state out
+                            (one simple operation — everything gets mixed together)
+
+
+  LSTM cell (three gates):
+
+    ┌─────────────────────────────────────────────────────────────────┐
+    │  Forget Gate   →  "Should I forget anything from my old memory?"│
+    │  Input Gate    →  "Should I store this new word into memory?"   │
+    │  Output Gate   →  "What part of my memory should I output now?" │
+    └─────────────────────────────────────────────────────────────────┘
+
+    hidden state in  ──►  [ Forget Gate ]  ──►  what to throw away
+    cell state in    ──►  [ Input Gate  ]  ──►  what new info to store
+                          [ Output Gate ]  ──►  what to pass forward
+                                 ↓
+                    hidden state out  +  cell state out
+
+    (two streams of memory — much richer than a basic RNN)
+```
+
+```
+  Memory range comparison:
+
+  Model         Reliable memory range     Notes
+  ─────────────────────────────────────────────────────────────────
+  Basic RNN     ~5–10 words               Simple, fast, forgets easily
+  GRU           ~30–50 words              Simpler gates than LSTM, less compute
+  LSTM          ~100+ words               Full gating — best at long sequences
+  Transformer   Entire sequence at once   No step-by-step at all — attention
+  ─────────────────────────────────────────────────────────────────
 ```
 
 ---
