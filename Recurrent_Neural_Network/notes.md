@@ -914,3 +914,311 @@ A basic RNN's weakness is its simple hidden state — it gets overwritten every 
 - [ ] LSTM — Long Short-Term Memory (fixes RNN's memory limitations over long sequences)
 - [ ] Vanishing gradient in RNNs — why memory fades over long sequences
 - [ ] RNN project — building a text model
+
+---
+
+## LSTM — Long Short-Term Memory
+
+> **Think of LSTM like your brain reading a book.** You remember the main character's name throughout the whole story, but you forget minor details like what they had for breakfast two chapters ago. LSTM does exactly this — it remembers what matters and lets go of what doesn't.
+
+### The Problem LSTM Solves
+
+A regular RNN struggles to remember things from way earlier in a sequence. LSTM fixes this by having **two separate memory channels** running through every step:
+
+| Memory Type                          | Symbol | Analogy                             |
+| ------------------------------------ | ------ | ----------------------------------- |
+| **Long-term memory** (Cell State)    | $C_t$  | A notepad you carry throughout time |
+| **Short-term memory** (Hidden State) | $h_t$  | What's currently in your head       |
+
+> Both $C_t$ and $h_t$ always have the same length (same number of neurons).
+
+---
+
+### How Words Become Numbers
+
+Before any processing, the input sentence is **vectorised** — every word becomes a number vector.
+
+```
+Sentence:    I       am      Bob
+             ↓       ↓       ↓
+Vectors:  [1,0,0] [0,1,0] [0,0,1]
+```
+
+Each word is then fed into the LSTM **one at a time**, step by step (each step = one timestamp).
+
+---
+
+### The 3 Gates of LSTM
+
+At every timestamp, three gates decide what to remember, what to add, and what to output:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                        LSTM CELL                        │
+│                                                         │
+│   ht-1 ──┐                                              │
+│           ├──► [ Forget Gate ] ──► updates C_t          │
+│   xt  ───┘           │                                  │
+│                       ▼                                  │
+│              [ Input Gate ] ──► adds new info to C_t    │
+│                       │                                  │
+│                       ▼                                  │
+│             [ Output Gate ] ──► produces ht             │
+│                                                         │
+│   Inputs: ht-1 (prev hidden), xt (current word)         │
+│   Outputs: ht (new hidden), Ct (updated cell state)     │
+└─────────────────────────────────────────────────────────┘
+```
+
+```mermaid
+flowchart LR
+    xt["xₜ\n(current word)"] --> FC
+    ht1["hₜ₋₁\n(prev hidden state)"] --> FC
+
+    subgraph LSTM_CELL ["🧠 LSTM Cell"]
+        FC["Concatenate\nhₜ₋₁ + xₜ"]
+        FC --> FG["🗑️ Forget Gate\nσ → decides what to erase"]
+        FC --> IG["✏️ Input Gate\nσ + tanh → decides what to add"]
+        FC --> OG["📤 Output Gate\nσ → decides what to show"]
+        FG --> CS["Cell State Cₜ\n(long-term memory)"]
+        IG --> CS
+        CS --> OG
+        OG --> HT["hₜ\n(hidden state out)"]
+    end
+
+    style FG fill:#ffcccc,stroke:#cc0000
+    style IG fill:#ccffcc,stroke:#009900
+    style OG fill:#ccccff,stroke:#0000cc
+    style CS fill:#ffffcc,stroke:#999900
+```
+
+---
+
+### Gate-by-Gate Walkthrough (with Riya's Story)
+
+**Example sentence:**
+
+> _"Riya is a doctor. She lives in Delhi. She works at a hospital. Last year, Riya moved to London. Now she works at a research lab."_
+
+---
+
+#### 🗑️ Forget Gate — "What do I throw away?"
+
+When the model reads _"moved to London"_, it realises Delhi is now old news. The forget gate **scores each memory from 0 to 1** — closer to 0 means forget, closer to 1 means keep.
+
+$$f_t = \sigma(W_f \cdot [h_{t-1},\ x_t] + b_f)$$
+
+| Memory Item         | Forget Score | Action                      |
+| ------------------- | ------------ | --------------------------- |
+| Gender (she/her)    | 0.99         | **Keep** — still relevant   |
+| Profession (doctor) | 0.95         | **Keep** — still a doctor   |
+| City (Delhi)        | 0.10         | **Forget** — she moved away |
+
+---
+
+#### ✏️ Input Gate — "What new info do I write in?"
+
+After forgetting Delhi, the model now needs to **write London into memory**. The input gate handles this in two steps:
+
+1. **Candidate Cell State $\tilde{C}_t$** — uses `tanh` to create new information (e.g., "London", "research lab")
+2. **Input filter $i_t$** — uses `sigmoid` to decide how much of that new info to actually add
+
+$$i_t = \sigma(W_i \cdot [h_{t-1},\ x_t] + b_i)$$
+$$\tilde{C}_t = \tanh(W_C \cdot [h_{t-1},\ x_t] + b_C)$$
+$$C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$$
+
+> $\odot$ means elementwise multiplication — each memory slot is updated independently.
+
+---
+
+#### 📤 Output Gate — "What do I say out loud?"
+
+The output gate **decides what part of the cell state becomes the hidden state** (what the model "speaks" to the next step or the final output layer).
+
+$$o_t = \sigma(W_o \cdot [h_{t-1},\ x_t] + b_o)$$
+$$h_t = o_t \odot \tanh(C_t)$$
+
+> The hidden state $h_t$ is a squished version of the cell state — only the relevant parts passed through.
+
+---
+
+### LSTM at a Glance
+
+```
+Timestamp 1: "Riya"       → remember: name=Riya
+Timestamp 2: "is"         → skip (not important)
+Timestamp 3: "a doctor"   → remember: job=doctor
+Timestamp 4: "Delhi"      → remember: city=Delhi
+Timestamp 5: "moved to"   → forget gate fires: city score drops
+Timestamp 6: "London"     → input gate fires: write city=London
+Timestamp 7: "research lab" → remember: new job context
+```
+
+---
+
+### ⚠️ Problems with LSTM
+
+| Problem              | Why it hurts                                              |
+| -------------------- | --------------------------------------------------------- |
+| Complex architecture | 4 neural networks inside one cell                         |
+| Too many parameters  | Slow to train on large datasets                           |
+| High time complexity | Each step depends on the previous one — can't parallelise |
+
+---
+
+---
+
+## GRU — Gated Recurrent Unit
+
+> **GRU is LSTM's younger, leaner sibling.** It does the same job but with fewer moving parts — making it faster and often just as good.
+
+### The Big Idea
+
+GRU noticed that LSTM has separate long-term and short-term memory, but actually **one well-managed memory** can do the trick. So GRU:
+
+- Uses **only one memory vector**: $h_t$ (no separate cell state)
+- Uses **only 2 gates** instead of 3
+
+```
+LSTM → 2 memory vectors (Cₜ and hₜ) + 3 gates
+GRU  → 1 memory vector (hₜ)         + 2 gates   ✅ simpler!
+```
+
+---
+
+### GRU Notation Cheat Sheet
+
+| Symbol        | Name                   | What it means                 |
+| ------------- | ---------------------- | ----------------------------- |
+| $h_{t-1}$     | Previous hidden state  | Memory from last step         |
+| $x_t$         | Current input          | Word at this timestamp        |
+| $h_t$         | Current hidden state   | Updated memory                |
+| $r_t$         | **Reset Gate**         | How much old memory to ignore |
+| $z_t$         | **Update Gate**        | How much to update vs retain  |
+| $\tilde{h}_t$ | Candidate hidden state | New info being proposed       |
+
+---
+
+### GRU Architecture
+
+```mermaid
+flowchart LR
+    xt["xₜ\n(current word)"]
+    ht1["hₜ₋₁\n(prev memory)"]
+
+    xt --> RG
+    ht1 --> RG
+    xt --> UG
+    ht1 --> UG
+
+    subgraph GRU_CELL ["⚡ GRU Cell"]
+        RG["🔄 Reset Gate rₜ\n(sigmoid)\nHow much past to forget"]
+        UG["🔀 Update Gate zₜ\n(sigmoid)\nHow much to update"]
+        RG --> CH["Candidate hₜ~\n(tanh)\nNew proposed memory"]
+        UG --> FH["Final hₜ\nMix of old + new"]
+        CH --> FH
+    end
+
+    FH --> out["hₜ\n(output + new memory)"]
+
+    style RG fill:#ffcccc,stroke:#cc0000
+    style UG fill:#ccffcc,stroke:#009900
+    style CH fill:#ffffcc,stroke:#999900
+    style FH fill:#ccccff,stroke:#0000cc
+```
+
+> Both gates run **at the same time** — they don't depend on each other, so GRU is more parallel-friendly than LSTM.
+
+---
+
+### Gate-by-Gate Walkthrough (with Riya's Story)
+
+**Example sentence:**
+
+> _"Riya lives in Delhi. Riya moved to London."_
+
+Each word gets a timestamp, and the sentence is vectorised first.
+
+---
+
+#### 🔄 Reset Gate — "How much of the past should I forget when building new ideas?"
+
+$$r_t = \sigma(W_r \cdot [h_{t-1},\ x_t])$$
+
+- Output is between 0 and 1
+- **0** = completely ignore old memory when forming a new idea
+- **1** = use full old memory
+
+---
+
+#### 🔀 Update Gate — "How much do I actually update my memory?"
+
+$$z_t = \sigma(W_z \cdot [h_{t-1},\ x_t])$$
+
+| Update Gate value ($z_t$) | What happens                                    |
+| ------------------------- | ----------------------------------------------- |
+| **High (close to 1)**     | Retain old memory — **don't change much**       |
+| **Low (close to 0)**      | Replace with new info — **update aggressively** |
+
+**Example:**
+
+```
+Reading "Delhi"  → zₜ is high → remember Delhi
+Reading "London" → zₜ is low  → update: replace Delhi with London
+```
+
+---
+
+#### 🧪 Candidate Hidden State — "What new info am I proposing?"
+
+$$\tilde{h}_t = \tanh(W \cdot [r_t \odot h_{t-1},\ x_t])$$
+
+The reset gate $r_t$ controls how much old memory is used to build this new proposal. If $r_t$ is low, the new idea is built mostly from the current word alone.
+
+---
+
+#### 🔀 Final Mix — "What's my actual updated memory?"
+
+$$h_t = (1 - z_t) \odot \tilde{h}_t + z_t \odot h_{t-1}$$
+
+Think of it like a blender:
+
+- $z_t$ controls **how much old memory** goes in
+- $(1 - z_t)$ controls **how much new info** goes in
+
+```
+h_t = [  old memory × zₜ  ] + [  new proposal × (1 - zₜ)  ]
+         "keep this much"           "add this much"
+```
+
+---
+
+### GRU Memory Flow Over Time
+
+```
+Step 1: "Riya"    → hₜ: {name=Riya}
+Step 2: "lives"   → hₜ: {name=Riya, verb=lives}
+Step 3: "in"      → hₜ: (skip word — low update)
+Step 4: "Delhi"   → hₜ: {name=Riya, city=Delhi}
+Step 5: "Riya"    → hₜ: (already known — minimal update)
+Step 6: "moved"   → hₜ: {name=Riya, city=Delhi, event=moved}
+Step 7: "to"      → hₜ: (skip — low update)
+Step 8: "London"  → zₜ LOW → hₜ: {name=Riya, city=London ✅}
+```
+
+No separate cell state needed. One vector, continuously sculpted.
+
+---
+
+### LSTM vs GRU — Side by Side
+
+| Feature         | LSTM                                    | GRU                            |
+| --------------- | --------------------------------------- | ------------------------------ |
+| Memory vectors  | 2 ($C_t$ + $h_t$)                       | 1 ($h_t$)                      |
+| Number of gates | 3 (forget, input, output)               | 2 (reset, update)              |
+| Parameters      | More                                    | Fewer                          |
+| Training speed  | Slower                                  | Faster                         |
+| Long sequences  | Excellent                               | Very good                      |
+| Use case        | Complex tasks (translation, captioning) | Simpler tasks, faster training |
+
+> **Rule of thumb:** Start with GRU. Switch to LSTM only if you need more expressive power on complex tasks.
