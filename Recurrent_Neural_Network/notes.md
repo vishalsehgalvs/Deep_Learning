@@ -911,9 +911,11 @@ A basic RNN's weakness is its simple hidden state — it gets overwritten every 
 
 ## Coming Next
 
-- [ ] LSTM — Long Short-Term Memory (fixes RNN's memory limitations over long sequences)
-- [ ] Vanishing gradient in RNNs — why memory fades over long sequences
-- [ ] RNN project — building a text model
+- [x] LSTM — Long Short-Term Memory (fixes RNN's memory limitations over long sequences)
+- [x] GRU — Gated Recurrent Unit (simpler and faster LSTM alternative)
+- [x] RNN project — sentence completion model trained on 3,000+ famous quotes
+- [ ] Vanishing gradient deep dive — the maths behind why memory fades
+- [ ] Transformers — how attention replaced RNNs entirely
 
 ---
 
@@ -1222,3 +1224,235 @@ No separate cell state needed. One vector, continuously sculpted.
 | Use case        | Complex tasks (translation, captioning) | Simpler tasks, faster training |
 
 > **Rule of thumb:** Start with GRU. Switch to LSTM only if you need more expressive power on complex tasks.
+
+---
+
+## Project — Sentence Completion with RNN and LSTM
+
+> **What this project does in one line:** Feed the model 3,000+ famous quotes and teach it to guess the next word in any sentence you give it.
+
+---
+
+### The Goal
+
+Imagine you're writing a sentence and you want the computer to suggest the next word — just like autocomplete on your phone. That is exactly what this project builds. We train on a collection of famous quotes, and after training the model has learned patterns in how words follow each other.
+
+---
+
+### The Dataset
+
+We use a CSV file (`data/qoute_dataset.csv`) containing **3,038 famous quotes** from people like Albert Einstein, J.K. Rowling, and Marilyn Monroe. Each row has a quote and the author's name. We only use the quote text for training.
+
+```
+Sample rows:
+  "The world as we have created it is a process of our thinking..."  →  Albert Einstein
+  "It is our choices, Harry, that show what we truly are..."         →  J.K. Rowling
+  "Imperfection is beauty, madness is genius..."                     →  Marilyn Monroe
+```
+
+---
+
+### Step 1 — Clean the Text (Preprocessing)
+
+Raw text is messy — capital letters, commas, full stops, quotation marks. We clean it up so the model only deals with simple lowercase words.
+
+```
+  Before:  "The World is Beautiful, isn't it?"
+  After:   the world is beautiful isnt it
+```
+
+- Convert everything to **lowercase**
+- **Strip all punctuation** (commas, full stops, apostrophes, etc.)
+
+---
+
+### Step 2 — Tokenisation (Give Every Word a Number)
+
+Computers do not understand words — they only understand numbers. So we assign each unique word a number. This is called a **vocabulary**.
+
+```
+  Word index (first 10 most common words):
+  'the' → 1,  'you' → 2,  'to' → 3,  'and' → 4,  'a' → 5
+  'i'   → 6,  'is'  → 7,  'of' → 8,  'that'→ 9,  'it'→ 10
+```
+
+We cap the vocabulary at **10,000 words** — words beyond that are simply ignored. The full dataset has ~8,978 unique words, so we capture all of them.
+
+Converting a quote to numbers:
+
+```
+  Quote:    "the world as we have created it is a process of our thinking..."
+  Numbers:  [713, 62, 29, 19, 16, 946, 10, 7, 5, 1156, 8, 70, 293, ...]
+```
+
+---
+
+### Step 3 — Build Training Pairs (Input → Next Word)
+
+This is the most important step. For every quote, we slide a window across it and generate every possible **prefix → next word** pair. Think of it as teaching the model one step at a time.
+
+```
+  Quote:   "the world as we have"
+
+  Training pairs generated:
+  ┌─────────────────────────────┬─────────────┐
+  │ Input (what the model sees) │ Target word │
+  ├─────────────────────────────┼─────────────┤
+  │ "the"                       │ "world"     │
+  │ "the world"                 │ "as"        │
+  │ "the world as"              │ "we"        │
+  │ "the world as we"           │ "have"      │
+  └─────────────────────────────┴─────────────┘
+```
+
+A 5-word quote produces 4 training pairs. A 20-word quote produces 19 pairs. From 3,038 quotes, this expansion gives us **85,271 training samples**.
+
+---
+
+### Step 4 — Padding (Make All Inputs the Same Length)
+
+The model expects every input to be the same length. But our inputs range from 1 word to 745 words (the longest quote). We **pad** shorter sequences with zeros at the front.
+
+```
+  Longest sequence = 745 words  →  max_length = 745
+
+  Input sequence "the"              → [0, 0, 0, ..., 0, 713]          (744 zeros + 1 word)
+  Input sequence "the world"        → [0, 0, 0, ..., 0, 713, 62]      (743 zeros + 2 words)
+  Input sequence "the world as we"  → [0, 0, 0, ..., 713, 62, 29, 19] (741 zeros + 4 words)
+
+  Result shape: (85271 samples, 745 timesteps)
+```
+
+Zeros at the front are just "empty" slots — the model learns to ignore them.
+
+---
+
+### Step 5 — One-Hot Encode the Target Words
+
+The target (the word the model should predict) is a single number like `62`. But for training classification, we need it as a vector of zeros with a single `1` in the position of the correct word. This is called **one-hot encoding**.
+
+```
+  Vocabulary size = 10,000
+
+  Target word index 62:
+  [0, 0, 0, ..., 1, 0, 0, ...]   ← index 62 is 1, everything else is 0
+   ↑                  ↑
+  index 0           index 62 = 1              (total length = 10,000)
+
+  Full target matrix shape: (85,271 samples  ×  10,000 possible words)
+```
+
+Each training sample now tells the model exactly which word it should have predicted.
+
+---
+
+### Step 6 — Build the Models
+
+We build two models side by side — a basic **RNN** and a more powerful **LSTM** — to compare them.
+
+```
+  Both models follow the same blueprint:
+
+  Input words (padded sequence of length 745)
+       ↓
+  Embedding Layer   → maps each word-number to a 50-dimensional meaning vector
+       ↓
+  RNN / LSTM Layer  → reads the sequence step by step, builds up memory (128 units)
+       ↓
+  Dense Layer       → 10,000 outputs (one score per word in vocabulary)
+       ↓
+  Softmax           → converts scores to probabilities (which word is most likely next?)
+```
+
+**Why an Embedding layer?** A word-number like `62` is just an arbitrary integer — it carries no meaning. The Embedding layer converts it into a 50-number vector that captures meaning. Words with similar meanings end up near each other in that 50-dimensional space.
+
+**SimpleRNN** — processes each word one step at a time, keeps one hidden state. Simple but forgetful on long sequences.
+
+**LSTM** — processes each word one step at a time, but keeps both a hidden state **and** a cell state. The cell state carries long-range memory through the sequence without fading.
+
+---
+
+### Step 7 — Train the LSTM
+
+We train the LSTM for **10 epochs** with a batch size of **128**. The RNN training code exists but is commented out — the LSTM is better and is the one we actually run.
+
+```
+  Training setup:
+  - Epochs: 10  (the model sees all 85,271 samples 10 times)
+  - Batch size: 128  (processes 128 samples before updating weights)
+  - Validation split: 10%  (holds back 8,527 samples to check generalisation)
+  - Loss: categorical_crossentropy  (standard for multi-class word prediction)
+  - Optimiser: Adam
+```
+
+**Training takes a while** — this is expected. The model is looking at 85,271 training samples, each with a 745-step sequence, and adjusting millions of weights.
+
+![RNN training time](images/training%20time%20for%20rnn%20model.png)
+_RNN model training time — each epoch completes faster but accuracy is lower_
+
+![LSTM training time](images/training%20time%20for%20ltsm%20model.jpg)
+_LSTM model training time — each epoch takes longer but the model learns better patterns_
+
+---
+
+### Step 8 — Save the Model
+
+After training, we save the model so we can load it later without retraining.
+
+```python
+  lstm_model.save('lstm_model.keras')   # ← recommended modern format
+  lstm_model.save('lstm_model.h5')      # ← legacy format; may not work on newer TF
+```
+
+> **Why `.keras` and not `.h5`?** The `.h5` format is from an older version of Keras. With TensorFlow 2.20+, the `.keras` format is the correct one to use. Saving to `.h5` is kept for reference but the real saved model is `lstm_model.keras`.
+
+---
+
+### Step 9 — Make Predictions (The Predictor Function)
+
+At the bottom of the file there is a commented-out `predictor` function. Once the model is trained and saved, you can uncomment this and use it to generate completions.
+
+```python
+  # How the predictor works:
+  # 1. Take any text string as input (e.g. "the world is")
+  # 2. Lowercase it and convert words to numbers using the same tokenizer
+  # 3. Pad to max_length = 745
+  # 4. Pass through the trained LSTM model
+  # 5. Model outputs probabilities for all 10,000 words
+  # 6. Pick the word with the highest probability (argmax)
+  # 7. Convert the index back to a word using index_to_word
+  # 8. Return that word as the predicted next word
+```
+
+Example usage:
+
+```
+  predictor(lstm_model, tokenizer, "the world is", max_length)
+  → "beautiful"   (or whatever word the model learned follows this pattern)
+```
+
+---
+
+### Summary — The Full Pipeline
+
+```
+  CSV file (3,038 quotes)
+       ↓
+  Clean text → lowercase, no punctuation
+       ↓
+  Tokenise → each word gets a number (vocab size = 10,000)
+       ↓
+  Build input/output pairs → 85,271 training samples
+       ↓
+  Pad sequences → all inputs = length 745
+       ↓
+  One-hot encode targets → shape (85271, 10000)
+       ↓
+  Build model: Embedding → LSTM(128) → Dense(10000) → Softmax
+       ↓
+  Train: 10 epochs, batch=128, validation=10%
+       ↓
+  Save: lstm_model.keras
+       ↓
+  Predict: give a phrase, get the next word back
+```
