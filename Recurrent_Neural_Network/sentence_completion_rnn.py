@@ -1,3 +1,35 @@
+# =============================================================================
+#  Sentence Completion with RNN & LSTM
+# =============================================================================
+#
+#  What this script does:
+#  ──────────────────────
+#  Trains two neural network models on 3,038 famous quotes to predict the
+#  next word in any sentence — like autocomplete on your phone.
+#
+#  Example:
+#    Input  →  "the world is"
+#    Output →  "beautiful"   (whatever word the model learned comes next)
+#
+#  How it works — step by step:
+#  ────────────────────────────
+#  Step 1  →  Load 3,038 famous quotes from a CSV file
+#  Step 2  →  Clean text — lowercase everything, strip all punctuation
+#  Step 3  →  Tokenise — give each unique word a number (vocab = 10,000 words)
+#  Step 4  →  Build training pairs — every prefix of every quote → next word
+#             (3,038 quotes expand into 85,271 training samples)
+#  Step 5  →  Pad sequences — all inputs made the same length (745)
+#  Step 6  →  One-hot encode — each target word becomes a 10,000-long vector
+#  Step 7  →  Build models — a SimpleRNN and an LSTM side by side
+#  Step 8  →  Train the LSTM — 10 epochs, batch size 128, 10% validation
+#  Step 9  →  Save the trained LSTM to lstm_model.keras
+#  Step 10 →  (Optional) Use the predictor function to generate next words
+#
+# =============================================================================
+
+# ──────────────────────────────────────────────
+# Imports — standard libraries
+# ──────────────────────────────────────────────
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,6 +50,10 @@ if gpus:
 else:
     print("No GPU found — training on CPU")
 
+# ──────────────────────────────────────────────
+# Imports — Keras layers and utilities
+# (using tf_keras for Keras 2 compatibility with TF 2.20+)
+# ──────────────────────────────────────────────
 from tf_keras.preprocessing.text import Tokenizer
 from tf_keras.preprocessing.sequence import pad_sequences
 from tf_keras.utils import to_categorical
@@ -29,6 +65,7 @@ from tf_keras.layers import Embedding, LSTM, Dense, SimpleRNN
 # ──────────────────────────────────────────────
 df = pd.read_csv('data/qoute_dataset.csv')
 # print(df.head())
+# Output:
 #                                                quote           Author
 # 0  “The world as we have created it is a process ...  Albert Einstein
 # 1  “It is our choices, Harry, that show what we t...     J.K. Rowling
@@ -37,15 +74,16 @@ df = pd.read_csv('data/qoute_dataset.csv')
 # 4  “Imperfection is beauty, madness is genius and...   Marilyn Monroe
 
 # print(df.shape)
-# (3038, 2) there are 3038 sentences/quotes
+# Output: (3038, 2)  ← 3,038 rows, 2 columns (quote + Author)
 
 quotes = df['quote']
 # print(quotes.head())
-# 0    “The world as we have created it is a process ...
-# 1    “It is our choices, Harry, that show what we t...
-# 2    “There are only two ways to live your life. On...
-# 3    “The person, be it gentleman or lady, who has ...
-# 4    “Imperfection is beauty, madness is genius and...
+# Output:
+# 0    "The world as we have created it is a process ...
+# 1    "It is our choices, Harry, that show what we t...
+# 2    "There are only two ways to live your life. On...
+# 3    "The person, be it gentleman or lady, who has ...
+# 4    "Imperfection is beauty, madness is genius and ...
 # Name: quote, dtype: object
 
 # ──────────────────────────────────────────────
@@ -56,11 +94,12 @@ quotes = quotes.str.lower()
 translator =str.maketrans("","",string.punctuation)
 quotes = quotes.apply(lambda x:x.translate(translator))
 # print(quotes.head())
-# 0    “the world as we have created it is a process ...
-# 1    “it is our choices harry that show what we tru...
-# 2    “there are only two ways to live your life one...
-# 3    “the person be it gentleman or lady who has no...
-# 4    “imperfection is beauty madness is genius and ...
+# Output (after cleaning):
+# 0    the world as we have created it is a process ...
+# 1    it is our choices harry that show what we tru...
+# 2    there are only two ways to live your life one...
+# 3    the person be it gentleman or lady who has no...
+# 4    imperfection is beauty madness is genius and ...
 # Name: quote, dtype: object
 
 # ──────────────────────────────────────────────
@@ -73,13 +112,13 @@ tokenizer.fit_on_texts(quotes)
 word_index = tokenizer.word_index
 # print(len(word_index))
 # print(list(word_index.items())[:10])
+# Output:
 # 8978   ← total unique words found in the dataset
 # [('the', 1), ('you', 2), ('to', 3), ('and', 4), ('a', 5), ('i', 6), ('is', 7), ('of', 8), ('that', 9), ('it', 10)]
 
 sequence = tokenizer.texts_to_sequences(quotes)
 # print(quotes[0])
-# print(sequence[0])
-# “the world as we have created it is a process of our thinking it cannot be changed without changing our thinking”
+# print(sequence[0])# Output:# “the world as we have created it is a process of our thinking it cannot be changed without changing our thinking”
 # [713, 62, 29, 19, 16, 946, 10, 7, 5, 1156, 8, 70, 293, 10, 145, 12, 809, 104, 752, 70, 2461]
 
 # ──────────────────────────────────────────────
@@ -100,9 +139,9 @@ for seq in sequence:
         y.append(output_seq)
 
 # print(len(X))
-# 85271
+# Output: 85271  ← 85,271 training samples
 # print(len(y))
-# 85271
+# Output: 85271
 
 # ──────────────────────────────────────────────
 # Padding — make all input sequences the same length
@@ -112,7 +151,7 @@ for seq in sequence:
 # ──────────────────────────────────────────────
 max_length = max(len(x) for x in X)
 # print(max_length)
-# 745  ← the longest quote has 745 words, so all inputs are padded to 745
+# Output: 745  ← the longest quote has 745 words, so all inputs are padded to 745
 
 X_padded = pad_sequences(X, maxlen=max_length, padding='pre')
 # print(X_padded)
@@ -125,13 +164,13 @@ X_padded = pad_sequences(X, maxlen=max_length, padding='pre')
 #  [   0    0    0 ... 1125    3  169]]
 
 # print(X_padded[0])
-# [  0   0   0  ..... 713]  ← 744 zeros followed by the first word number
+# Output: [  0   0   0  ..... 713]  ← 744 zeros followed by the first word number
 
 y = np.array(y)
 # print(X_padded.shape)
-# (85271, 745)  ← 85,271 samples, each 745 timesteps long
+# Output: (85271, 745)  ← 85,271 samples, each 745 timesteps long
 # print(y.shape)
-# (85271,)
+# Output: (85271,)
 
 # ──────────────────────────────────────────────
 # One-hot encoding — convert each target word index into a
@@ -140,7 +179,7 @@ y = np.array(y)
 # ──────────────────────────────────────────────
 y_one_hot = to_categorical(y, num_classes=vocabulary_size)
 # print(y_one_hot.shape)
-# (85271, 10000)  ← 85,271 samples, each is a 10,000-length vector
+# Output: (85271, 10000)  ← 85,271 samples, each is a 10,000-length vector
 
 # ──────────────────────────────────────────────
 # Build the RNN model
@@ -159,6 +198,15 @@ rnn_model.add(SimpleRNN(units=rnn_units))
 rnn_model.add(Dense(units=vocabulary_size,activation='softmax'))
 rnn_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 # print(rnn_model.summary())
+#
+# Model architecture:
+#   Layer (type)       Output Shape          Param #
+#   ────────────────────────────────────────────────
+#   Embedding          (None, 745, 50)       500,000
+#   SimpleRNN          (None, 128)            22,912
+#   Dense              (None, 10000)       1,290,000
+#   ────────────────────────────────────────────────
+#   Total params: ~1.8M
 
 # ──────────────────────────────────────────────
 # Build the LSTM model
@@ -172,6 +220,15 @@ lstm_model.add(LSTM(units=rnn_units))
 lstm_model.add(Dense(units=vocabulary_size, activation='softmax'))
 lstm_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 # print(lstm_model.summary())
+#
+# Model architecture:
+#   Layer (type)       Output Shape          Param #
+#   ────────────────────────────────────────────────
+#   Embedding          (None, 745, 50)       500,000
+#   LSTM               (None, 128)            91,648
+#   Dense              (None, 10000)       1,290,000
+#   ────────────────────────────────────────────────
+#   Total params: ~1.9M  (more than RNN — the 4 gates cost extra params)
 
 # ──────────────────────────────────────────────
 # Train the RNN model (commented out — LSTM gives better results)
