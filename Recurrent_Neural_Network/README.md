@@ -44,6 +44,11 @@ Recurrent_Neural_Network/
 ├── rnn_revision_notes.md        ← quick revision cheat sheet
 ├── data/
 │   └── qoute_dataset.csv        ← 3,038 famous quotes
+├── models/
+│   ├── lstm_model.keras         ← trained LSTM (recommended format)
+│   ├── lstm_model.h5            ← trained LSTM (legacy format)
+│   ├── rnn_model.keras          ← trained SimpleRNN (for comparison)
+│   └── rnn_model.h5             ← trained SimpleRNN (legacy format)
 └── images/                      ← architecture diagrams and training time screenshots
 ```
 
@@ -152,10 +157,10 @@ _LSTM — each epoch takes longer but the model learns better patterns and remem
 
 After training, two formats are saved:
 
-| File               | Format | Notes                                        |
-| ------------------ | ------ | -------------------------------------------- |
-| `lstm_model.keras` | Modern | Recommended — works with TensorFlow 2.x+     |
-| `lstm_model.h5`    | Legacy | Kept for reference; may not load on newer TF |
+| File                      | Format | Notes                                        |
+| ------------------------- | ------ | -------------------------------------------- |
+| `models/lstm_model.keras` | Modern | Recommended — works with TensorFlow 2.x+     |
+| `models/lstm_model.h5`    | Legacy | Kept for reference; may not load on newer TF |
 
 ---
 
@@ -169,7 +174,7 @@ Run with:
 streamlit run next_word_prediction_ui.py
 ```
 
-> Note: make sure `lstm_model.keras` (or `.h5`) and a saved `tokenizer.pkl` and `max_len.pkl` are in the same folder before running.
+> Note: make sure `models/lstm_model.keras` (or `.h5`) and a saved `tokenizer.pkl` and `max_len.pkl` are in the same folder before running.
 
 ---
 
