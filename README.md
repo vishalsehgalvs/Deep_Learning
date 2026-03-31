@@ -6,11 +6,12 @@ This repo is where I'm documenting everything I learn about Deep Learning — in
 
 ## What's in here
 
-| Folder                          | What it covers                                                  |
-| ------------------------------- | --------------------------------------------------------------- |
-| `Artificial_Neural_Network/`    | ANN basics and code — binary and multi-class                    |
-| `Convolutional_Neural_Network/` | CNN theory and code — handwritten digit classifier              |
-| `Recurrent_Neural_Network/`     | RNN/LSTM theory and code — sentence completion on famous quotes |
+| Folder                                 | What it covers                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| `Artificial_Neural_Network/`           | ANN basics and code — binary and multi-class                              |
+| `Convolutional_Neural_Network/`        | CNN theory and code — handwritten digit classifier                        |
+| `Recurrent_Neural_Network/`            | RNN/LSTM theory and code — sentence completion on famous quotes           |
+| `Transformer and Attention Mechanism/` | Seq2Seq, Attention, and Transformer theory — the architecture behind LLMs |
 
 ---
 
@@ -144,7 +145,12 @@ That's why we move to full ANNs with better activation functions.
 - [x] GRU — reset gate, update gate, simplified LSTM (see `Recurrent_Neural_Network/notes.md`)
 - [x] RNN project — sentence completion model trained on 3,000+ famous quotes (see `Recurrent_Neural_Network/sentence_completion_rnn.py`)
 - [ ] Vanishing gradient deep dive — the maths behind why memory fades
-- [ ] Transformers — how attention replaced RNNs entirely
+- [x] Seq2Seq problem — why RNNs alone can't do translation (see `Transformer and Attention Mechanism/notes.md`)
+- [x] RNN Encoder-Decoder — context vector and the bottleneck problem (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Attention mechanism — how the decoder focuses on relevant input words (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Transformer architecture — self-attention, multi-head attention, positional encoding (see `Transformer and Attention Mechanism/notes.md`)
+- [ ] BERT deep dive — bidirectional encoding and fine-tuning
+- [ ] GPT architecture — autoregressive text generation
 
 ---
 
@@ -419,25 +425,26 @@ _LSTM training — each epoch takes longer but the model learns richer patterns 
 
 ## Files in this repo
 
-| File                                                   | What it is                                                             |
-| ------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `Artificial_Neural_Network/plant_water_predictor.py`   | First ANN — binary classification, plant watering                      |
-| `Artificial_Neural_Network/iris_species_classifier.py` | Second ANN — multi-class classification, Iris species                  |
-| `Artificial_Neural_Network/Iris.csv`                   | Dataset used by iris_species_classifier.py                             |
-| `Artificial_Neural_Network/notes.md`                   | Core ANN theory — forward prop, backprop, training loop                |
-| `Artificial_Neural_Network/activation_functions.md`    | All activation functions with graphs and formulas                      |
-| `Artificial_Neural_Network/loss_functions.md`          | All loss functions with graphs and pros/cons                           |
-| `Artificial_Neural_Network/optimizers.md`              | All optimizers with graphs, formulas and code examples                 |
-| `Artificial_Neural_Network/blackbox_vs_whitebox.md`    | What black box and white box models mean in plain words                |
-| `Convolutional_Neural_Network/cnn.py`                  | CNN project — Perceptron baseline + CNN, training, evaluation          |
-| `Convolutional_Neural_Network/data/train.csv`          | 42,000 labelled handwritten digit images (Kaggle MNIST)                |
-| `Convolutional_Neural_Network/data/test.csv`           | 28,000 unlabelled digit images (Kaggle submission format)              |
-| `Convolutional_Neural_Network/notes.md`                | Full CNN theory — filters, pooling, padding, dropout and more          |
-| `Convolutional_Neural_Network/README.md`               | CNN project overview — models, architecture, how to run                |
-| `Recurrent_Neural_Network/sentence_completion_rnn.py`  | RNN/LSTM project — next word prediction trained on 3,038 famous quotes |
-| `Recurrent_Neural_Network/sentiment_classifier_rnn.py` | Earlier RNN project — binary sentiment classifier                      |
-| `Recurrent_Neural_Network/next_word_prediction_ui.py`  | Streamlit web UI to interact with the trained LSTM model               |
-| `Recurrent_Neural_Network/data/qoute_dataset.csv`      | 3,038 famous quotes used for training                                  |
-| `Recurrent_Neural_Network/notes.md`                    | Full RNN theory — RNN, LSTM, GRU, gates, vanishing gradients and more  |
-| `Recurrent_Neural_Network/rnn_revision_notes.md`       | Quick revision cheat sheet for RNN, LSTM, GRU                          |
-| `Recurrent_Neural_Network/README.md`                   | RNN project overview — pipeline, models, architecture, how to run      |
+| File                                                   | What it is                                                                    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `Artificial_Neural_Network/plant_water_predictor.py`   | First ANN — binary classification, plant watering                             |
+| `Artificial_Neural_Network/iris_species_classifier.py` | Second ANN — multi-class classification, Iris species                         |
+| `Artificial_Neural_Network/Iris.csv`                   | Dataset used by iris_species_classifier.py                                    |
+| `Artificial_Neural_Network/notes.md`                   | Core ANN theory — forward prop, backprop, training loop                       |
+| `Artificial_Neural_Network/activation_functions.md`    | All activation functions with graphs and formulas                             |
+| `Artificial_Neural_Network/loss_functions.md`          | All loss functions with graphs and pros/cons                                  |
+| `Artificial_Neural_Network/optimizers.md`              | All optimizers with graphs, formulas and code examples                        |
+| `Artificial_Neural_Network/blackbox_vs_whitebox.md`    | What black box and white box models mean in plain words                       |
+| `Convolutional_Neural_Network/cnn.py`                  | CNN project — Perceptron baseline + CNN, training, evaluation                 |
+| `Convolutional_Neural_Network/data/train.csv`          | 42,000 labelled handwritten digit images (Kaggle MNIST)                       |
+| `Convolutional_Neural_Network/data/test.csv`           | 28,000 unlabelled digit images (Kaggle submission format)                     |
+| `Convolutional_Neural_Network/notes.md`                | Full CNN theory — filters, pooling, padding, dropout and more                 |
+| `Convolutional_Neural_Network/README.md`               | CNN project overview — models, architecture, how to run                       |
+| `Recurrent_Neural_Network/sentence_completion_rnn.py`  | RNN/LSTM project — next word prediction trained on 3,038 famous quotes        |
+| `Recurrent_Neural_Network/sentiment_classifier_rnn.py` | Earlier RNN project — binary sentiment classifier                             |
+| `Recurrent_Neural_Network/next_word_prediction_ui.py`  | Streamlit web UI to interact with the trained LSTM model                      |
+| `Recurrent_Neural_Network/data/qoute_dataset.csv`      | 3,038 famous quotes used for training                                         |
+| `Recurrent_Neural_Network/notes.md`                    | Full RNN theory — RNN, LSTM, GRU, gates, vanishing gradients and more         |
+| `Recurrent_Neural_Network/rnn_revision_notes.md`       | Quick revision cheat sheet for RNN, LSTM, GRU                                 |
+| `Recurrent_Neural_Network/README.md`                   | RNN project overview — pipeline, models, architecture, how to run             |
+| `Transformer and Attention Mechanism/notes.md`         | Seq2Seq, Attention, and Transformer theory — from RNN encoder-decoder to BERT |
