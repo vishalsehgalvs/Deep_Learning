@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RNN / LSTM / GRU — Revision Notes</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #22263a;
+    --card: #1e2235;
+    --border: #2e3450;
+    --text: #e2e4f0;
+    --muted: #8b90a8;
+    --accent: #6c8fff;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --teal: #2dd4bf;
+    --purple: #c084fc;
+    --pink: #f472b6;
+    --code-bg: #12151f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 24px 16px 60px;
+  }
+  .page { max-width: 860px; margin: 0 auto; }
+  h1 {
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--teal));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  h2 {
+    font-size: 18px; font-weight: 600; color: var(--accent);
+    border-left: 3px solid var(--accent);
+    padding-left: 12px; margin: 36px 0 14px;
+  }
+  h3 { font-size: 15px; font-weight: 600; color: var(--amber); margin: 20px 0 8px; }
+  p { margin-bottom: 10px; color: var(--text); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 14px 0;
+  }
+  .card-title {
+    font-size: 12px; font-weight: 600; letter-spacing: .08em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
+  }
+  code, .formula {
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    background: var(--code-bg);
+    color: var(--teal);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 13px;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    color: var(--teal);
+    margin: 10px 0;
+    line-height: 1.6;
+  }
+  pre .cmt { color: var(--muted); }
+  pre .kw  { color: var(--purple); }
+  pre .val { color: var(--amber); }
+  pre .fn  { color: var(--green); }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  th {
+    background: var(--bg3); color: var(--accent);
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    padding: 9px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 9px 12px; border-bottom: 1px solid var(--border);
+    font-size: 13.5px; color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg3); }
+  .tag {
+    display: inline-block; border-radius: 5px;
+    padding: 2px 8px; font-size: 11.5px; font-weight: 600;
+    margin: 2px;
+  }
+  .tag-green  { background: #14532d; color: var(--green); }
+  .tag-red    { background: #450a0a; color: var(--red); }
+  .tag-amber  { background: #451a03; color: var(--amber); }
+  .tag-blue   { background: #1e3a5f; color: var(--accent); }
+  .tag-purple { background: #3b1f5e; color: var(--purple); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 12px; font-size: 12px;
+    font-weight: 600; color: var(--muted); margin: 4px;
+  }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+  svg.diagram { width: 100%; height: auto; display: block; margin: 6px 0; }
+  .problem-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin: 10px 0;
+  }
+  .problem-item {
+    background: var(--bg3); border: 1px solid #f871711a;
+    border-radius: 8px; padding: 10px 14px;
+  }
+  .problem-num { color: var(--red); font-weight: 700; font-size: 13px; }
+  .problem-text { font-size: 13px; color: var(--text); }
+  .gate-block {
+    border-left: 3px solid;
+    padding: 10px 14px; border-radius: 0 8px 8px 0;
+    background: var(--bg3); margin: 10px 0;
+  }
+  .gate-forget { border-color: var(--red);    }
+  .gate-input  { border-color: var(--amber);  }
+  .gate-output { border-color: var(--green);  }
+  .gate-update { border-color: var(--accent); }
+  .gate-reset  { border-color: var(--pink);   }
+  .gate-label { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .gate-forget .gate-label { color: var(--red);    }
+  .gate-input  .gate-label { color: var(--amber);  }
+  .gate-output .gate-label { color: var(--green);  }
+  .gate-update .gate-label { color: var(--accent); }
+  .gate-reset  .gate-label { color: var(--pink);   }
+  .sep { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+  .tip {
+    background: #1a2d1a; border: 1px solid #2a5f2a;
+    border-radius: 8px; padding: 10px 14px; margin: 10px 0;
+    font-size: 13px; color: #86efac;
+  }
+  .warn {
+    background: #2d1a1a; border: 1px solid #5f2a2a;
+    border-radius: 8px; padding: 10px 14px; margin: 10px 0;
+    font-size: 13px; color: var(--red);
+  }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 10px 0; }
+  @media (max-width: 600px) {
+    .two-col, .problem-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>RNN · LSTM · GRU</h1>
+<p class="subtitle">Concise revision notes — architecture, formulas, diagrams, problems &amp; solutions</p>
+
+<!-- ─────────────────────── 1. DEEP LEARNING LANDSCAPE ─────────────────────── -->
+<h2>1 · Deep Learning Landscape</h2>
+<p>Three main neural network architectures in deep learning:</p>
+
+<svg class="diagram" viewBox="0 0 680 130">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <!-- ANN -->
+  <rect x="40" y="30" width="160" height="70" rx="10" fill="#1e2235" stroke="#3b4fd0" stroke-width="1.2"/>
+  <text x="120" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#6c8fff">ANN</text>
+  <text x="120" y="78" text-anchor="middle" font-size="11" fill="#8b90a8">Tabular / images</text>
+  <text x="120" y="92" text-anchor="middle" font-size="11" fill="#8b90a8">Non-sequential</text>
+  <!-- CNN -->
+  <rect x="260" y="30" width="160" height="70" rx="10" fill="#1e2235" stroke="#10b981" stroke-width="1.2"/>
+  <text x="340" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#4ade80">CNN</text>
+  <text x="340" y="78" text-anchor="middle" font-size="11" fill="#8b90a8">Images / spatial</text>
+  <text x="340" y="92" text-anchor="middle" font-size="11" fill="#8b90a8">Grid data</text>
+  <!-- RNN -->
+  <rect x="480" y="30" width="160" height="70" rx="10" fill="#1e2235" stroke="#f59e0b" stroke-width="1.8"/>
+  <text x="560" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#fbbf24">RNN</text>
+  <text x="560" y="78" text-anchor="middle" font-size="11" fill="#8b90a8">Text / time-series</text>
+  <text x="560" y="92" text-anchor="middle" font-size="11" fill="#8b90a8">Sequential data</text>
+  <!-- Star on RNN -->
+  <text x="626" y="26" font-size="14" fill="#fbbf24">★</text>
+</svg>
+
+<div class="card">
+  <div class="card-title">Sequential data — when to use RNN</div>
+  <table>
+    <tr><th>Non-Sequential (ANN)</th><th>Sequential (RNN)</th></tr>
+    <tr><td>Age, Location, Salary</td><td>Text sentences</td></tr>
+    <tr><td>Fixed feature vectors</td><td>Time-series / speech</td></tr>
+    <tr><td>Order doesn't matter</td><td>Order carries meaning</td></tr>
+  </table>
+</div>
+
+<!-- ─────────────────────── 2. WHY RNN OVER ANN ─────────────────────── -->
+<h2>2 · Why RNN Instead of ANN?</h2>
+<p>Consider sentiment classification of reviews:</p>
+<pre>
+1. I love Sheryians          → <span class="val">1</span>  (positive)
+2. Sheryians provide quality → <span class="val">1</span>  (positive)
+3. I hate Sheryians          → <span class="val">0</span>  (negative)
+</pre>
+
+<h3>One-Hot Encoding (OHE) — the ANN approach</h3>
+<p>Vocabulary size = 7 words. Each sentence → matrix of OHE vectors:</p>
+<pre>
+Sentence 1 → [ [1,0,0,0,0,0,0],   <span class="cmt">← "I"</span>
+               [0,1,0,0,0,0,0],   <span class="cmt">← "love"</span>
+               [0,0,1,0,0,0,0] ]  <span class="cmt">← "Sheryians"</span>
+</pre>
+<div class="problem-grid">
+  <div class="problem-item"><span class="problem-num">① </span><span class="problem-text">Text input size may vary</span></div>
+  <div class="problem-item"><span class="problem-num">② </span><span class="problem-text">High computational power</span></div>
+  <div class="problem-item"><span class="problem-num">③ </span><span class="problem-text">Train/test input size mismatch</span></div>
+  <div class="problem-item"><span class="problem-num">④ </span><span class="problem-text">Semantic sequence NOT retained</span></div>
+</div>
+
+<!-- ─────────────────────── 3. RNN ARCHITECTURE ─────────────────────── -->
+<h2>3 · RNN Architecture</h2>
+
+<div class="two-col">
+  <div>
+    <h3>ANN — Feed Forward</h3>
+    <svg class="diagram" viewBox="0 0 300 100">
+      <rect x="40" y="30" width="80" height="40" rx="8" fill="#1e2235" stroke="#3b4fd0" stroke-width="1"/>
+      <text x="80" y="55" text-anchor="middle" font-size="13" fill="#6c8fff">Layer</text>
+      <line x1="10" y1="50" x2="38" y2="50" stroke="#8b90a8" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="122" y1="50" x2="150" y2="50" stroke="#8b90a8" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="8" y="45" font-size="11" fill="#8b90a8">in</text>
+      <text x="156" y="45" font-size="11" fill="#8b90a8">out</text>
+      <text x="150" y="82" font-size="10" fill="#8b90a8">One direction only</text>
+    </svg>
+  </div>
+  <div>
+    <h3>RNN — Feedback / Recurrent</h3>
+    <svg class="diagram" viewBox="0 0 300 120">
+      <rect x="90" y="30" width="100" height="44" rx="8" fill="#1e2235" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="140" y="57" text-anchor="middle" font-size="13" fill="#fbbf24">RNN cell</text>
+      <line x1="10" y1="52" x2="88" y2="52" stroke="#8b90a8" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="192" y1="52" x2="220" y2="52" stroke="#8b90a8" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="8" y="47" font-size="11" fill="#8b90a8">in</text>
+      <text x="224" y="47" font-size="11" fill="#fbbf24">out</text>
+      <!-- feedback arrow -->
+      <path d="M 192 65 Q 240 100 140 100 Q 40 100 88 65" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <text x="140" y="115" text-anchor="middle" font-size="10" fill="#f59e0b">feedback loop</text>
+    </svg>
+  </div>
+</div>
+
+<h3>Keras Input Shape</h3>
+<div class="card">
+  <code>(batch_size, timestamp, input_features)</code>
+  &nbsp;&nbsp;→&nbsp;&nbsp;
+  <code>(3, 4, 6)</code>
+  <br><br>
+  <table>
+    <tr><th>Parameter</th><th>Meaning</th><th>Example</th></tr>
+    <tr><td><code>batch_size</code></td><td>Number of sentences</td><td>3</td></tr>
+    <tr><td><code>timestamp</code></td><td>Words per sentence</td><td>4</td></tr>
+    <tr><td><code>input_features</code></td><td>OHE vector length (vocab size)</td><td>6</td></tr>
+  </table>
+</div>
+
+<!-- ─────────────────────── 4. FORWARD PASS ─────────────────────── -->
+<h2>4 · RNN Forward Pass — Step by Step</h2>
+<p>Example: <strong>"you are good"</strong> — vocabulary = 5 words</p>
+
+<svg class="diagram" viewBox="0 0 680 220">
+  <!-- Vocab table -->
+  <rect x="20" y="10" width="200" height="150" rx="8" fill="#12151f" stroke="#2e3450" stroke-width="1"/>
+  <text x="120" y="32" text-anchor="middle" font-size="12" font-weight="600" fill="#6c8fff">Vocabulary (OHE)</text>
+  <text x="34" y="55"  font-size="12" fill="#4ade80">you</text>   <text x="100" y="55"  font-size="11" fill="#8b90a8">[1,0,0,0,0]</text>
+  <text x="34" y="75"  font-size="12" fill="#4ade80">are</text>   <text x="100" y="75"  font-size="11" fill="#8b90a8">[0,1,0,0,0]</text>
+  <text x="34" y="95"  font-size="12" fill="#4ade80">good</text>  <text x="100" y="95"  font-size="11" fill="#8b90a8">[0,0,1,0,0]</text>
+  <text x="34" y="115" font-size="12" fill="#4ade80">bad</text>   <text x="100" y="115" font-size="11" fill="#8b90a8">[0,0,0,1,0]</text>
+  <text x="34" y="135" font-size="12" fill="#4ade80">not</text>   <text x="100" y="135" font-size="11" fill="#8b90a8">[0,0,0,0,1]</text>
+  <!-- T1 -->
+  <rect x="260" y="20" width="110" height="50" rx="8" fill="#1e2235" stroke="#6c8fff" stroke-width="1.2"/>
+  <text x="315" y="42" text-anchor="middle" font-size="12" font-weight="600" fill="#6c8fff">T=1: you</text>
+  <text x="315" y="58" text-anchor="middle" font-size="10" fill="#8b90a8">[1,0,0,0,0]</text>
+  <!-- T2 -->
+  <rect x="400" y="20" width="110" height="50" rx="8" fill="#1e2235" stroke="#fbbf24" stroke-width="1.2"/>
+  <text x="455" y="42" text-anchor="middle" font-size="12" font-weight="600" fill="#fbbf24">T=2: are</text>
+  <text x="455" y="58" text-anchor="middle" font-size="10" fill="#8b90a8">[0,1,0,0,0]</text>
+  <!-- T3 -->
+  <rect x="540" y="20" width="120" height="50" rx="8" fill="#1e2235" stroke="#4ade80" stroke-width="1.2"/>
+  <text x="600" y="42" text-anchor="middle" font-size="12" font-weight="600" fill="#4ade80">T=3: good</text>
+  <text x="600" y="58" text-anchor="middle" font-size="10" fill="#8b90a8">[0,0,1,0,0]</text>
+  <!-- Arrows between T -->
+  <line x1="372" y1="45" x2="398" y2="45" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="512" y1="45" x2="538" y2="45" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- RNN cells -->
+  <rect x="260" y="110" width="110" height="50" rx="8" fill="#221a2a" stroke="#c084fc" stroke-width="1.2"/>
+  <text x="315" y="133" text-anchor="middle" font-size="12" font-weight="600" fill="#c084fc">Cell 1</text>
+  <text x="315" y="150" text-anchor="middle" font-size="10" fill="#8b90a8">h₁ = tanh(·)</text>
+  <rect x="400" y="110" width="110" height="50" rx="8" fill="#221a2a" stroke="#c084fc" stroke-width="1.2"/>
+  <text x="455" y="133" text-anchor="middle" font-size="12" font-weight="600" fill="#c084fc">Cell 2</text>
+  <text x="455" y="150" text-anchor="middle" font-size="10" fill="#8b90a8">h₂ = tanh(·)</text>
+  <rect x="540" y="110" width="120" height="50" rx="8" fill="#221a2a" stroke="#c084fc" stroke-width="1.2"/>
+  <text x="600" y="133" text-anchor="middle" font-size="12" font-weight="600" fill="#c084fc">Cell 3</text>
+  <text x="600" y="150" text-anchor="middle" font-size="10" fill="#8b90a8">h₃ → ŷ</text>
+  <!-- Vertical arrows input→cell -->
+  <line x1="315" y1="72" x2="315" y2="108" stroke="#6c8fff" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="455" y1="72" x2="455" y2="108" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="600" y1="72" x2="600" y2="108" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Hidden state arrows -->
+  <line x1="372" y1="135" x2="398" y2="135" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="512" y1="135" x2="538" y2="135" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Wh labels -->
+  <text x="385" y="128" font-size="10" fill="#c084fc">Wₕ</text>
+  <text x="525" y="128" font-size="10" fill="#c084fc">Wₕ</text>
+  <!-- Output arrow -->
+  <line x1="600" y1="162" x2="600" y2="195" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="555" y="196" width="90" height="20" rx="5" fill="#0f2318" stroke="#4ade80" stroke-width="1"/>
+  <text x="600" y="210" text-anchor="middle" font-size="11" fill="#4ade80">ŷ = σ(h₃·Wₒ)</text>
+</svg>
+
+<h3>Formulas at Each Timestep</h3>
+<div class="card">
+  <div class="card-title">Activation: tanh (default in hidden layer)</div>
+  <pre>
+h₁ = <span class="fn">tanh</span>( you × Wᵢ + b )              <span class="cmt">→ shape (1,5)×(5,3) = (1,3)</span>
+
+h₂ = <span class="fn">tanh</span>( (are × Wᵢ) + (Wₕ × h₁) + b ) <span class="cmt">→ (1,3)</span>
+
+h₃ = <span class="fn">tanh</span>( (good × Wᵢ) + (Wₕ × h₂) + b )<span class="cmt">→ (1,3)</span>
+
+ŷ  = <span class="fn">σ</span>( h₃ × Wₒ )                        <span class="cmt">→ (1,3)×(3,1) = (1,1)</span></pre>
+</div>
+
+<h3>Weight Count</h3>
+<svg class="diagram" viewBox="0 0 680 80">
+  <rect x="40"  y="15" width="140" height="50" rx="8" fill="#1e2235" stroke="#6c8fff" stroke-width="1"/>
+  <text x="110" y="37" text-anchor="middle" font-size="13" font-weight="600" fill="#6c8fff">Wᵢ = (5×3)</text>
+  <text x="110" y="54" text-anchor="middle" font-size="11" fill="#8b90a8">15 weights</text>
+
+  <text x="206" y="45" text-anchor="middle" font-size="20" fill="#8b90a8">+</text>
+
+  <rect x="220" y="15" width="140" height="50" rx="8" fill="#1e2235" stroke="#4ade80" stroke-width="1"/>
+  <text x="290" y="37" text-anchor="middle" font-size="13" font-weight="600" fill="#4ade80">Wₒ = (3×1)</text>
+  <text x="290" y="54" text-anchor="middle" font-size="11" fill="#8b90a8">3 weights</text>
+
+  <text x="386" y="45" text-anchor="middle" font-size="20" fill="#8b90a8">+</text>
+
+  <rect x="400" y="15" width="140" height="50" rx="8" fill="#1e2235" stroke="#c084fc" stroke-width="1"/>
+  <text x="470" y="37" text-anchor="middle" font-size="13" font-weight="600" fill="#c084fc">Wₕ = (3×3)</text>
+  <text x="470" y="54" text-anchor="middle" font-size="11" fill="#8b90a8">9 weights</text>
+
+  <text x="566" y="45" text-anchor="middle" font-size="20" fill="#8b90a8">=</text>
+
+  <rect x="580" y="15" width="80" height="50" rx="8" fill="#1a1200" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="620" y="37" text-anchor="middle" font-size="14" font-weight="700" fill="#fbbf24">27</text>
+  <text x="620" y="54" text-anchor="middle" font-size="11" fill="#fbbf24">total</text>
+</svg>
+
+<!-- ─────────────────────── 5. BPTT ─────────────────────── -->
+<h2>5 · Backpropagation Through Time (BPTT)</h2>
+
+<svg class="diagram" viewBox="0 0 680 160">
+  <!-- Cells in a row -->
+  <rect x="40"  y="50" width="80" height="50" rx="8" fill="#1e2235" stroke="#c084fc" stroke-width="1"/>
+  <text x="80"  y="80" text-anchor="middle" font-size="12" fill="#c084fc">Cell T₁</text>
+  <rect x="180" y="50" width="80" height="50" rx="8" fill="#1e2235" stroke="#c084fc" stroke-width="1"/>
+  <text x="220" y="80" text-anchor="middle" font-size="12" fill="#c084fc">Cell T₂</text>
+  <rect x="320" y="50" width="80" height="50" rx="8" fill="#1e2235" stroke="#c084fc" stroke-width="1"/>
+  <text x="360" y="80" text-anchor="middle" font-size="12" fill="#c084fc">Cell T₃</text>
+  <!-- Forward arrows -->
+  <line x1="122" y1="75" x2="178" y2="75" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="262" y1="75" x2="318" y2="75" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="148" y="68" font-size="10" fill="#c084fc">h₁</text>
+  <text x="288" y="68" font-size="10" fill="#c084fc">h₂</text>
+  <!-- Output -->
+  <line x1="402" y1="75" x2="460" y2="75" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="462" y="58" width="60" height="34" rx="6" fill="#0f2318" stroke="#4ade80" stroke-width="1"/>
+  <text x="492" y="79" text-anchor="middle" font-size="11" fill="#4ade80">ŷ</text>
+  <!-- Loss -->
+  <line x1="524" y1="75" x2="580" y2="75" stroke="#f87171" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="582" y="58" width="60" height="34" rx="6" fill="#2d0f0f" stroke="#f87171" stroke-width="1"/>
+  <text x="612" y="79" text-anchor="middle" font-size="11" fill="#f87171">Loss</text>
+  <!-- Backprop arrow -->
+  <path d="M 580 105 Q 400 145 200 105" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+  <text x="380" y="150" text-anchor="middle" font-size="11" fill="#f87171">← BPTT (gradients flow backward through all timesteps)</text>
+</svg>
+
+<div class="card">
+  <div class="card-title">Loss Function — Binary Cross-Entropy</div>
+  <pre>
+L = <span class="val">-y</span>·<span class="fn">log</span>(ŷ) <span class="val">-</span> (1<span class="val">-y</span>)·<span class="fn">log</span>(1<span class="val">-</span>ŷ)</pre>
+</div>
+
+<div class="card">
+  <div class="card-title">Weight Updates — Gradient Descent</div>
+  <pre>
+<span class="kw">Wᵢ_new</span> = Wᵢ <span class="val">-</span> η · (∂L/∂Wᵢ)
+<span class="kw">Wₕ_new</span> = Wₕ <span class="val">-</span> η · (∂L/∂Wₕ)
+<span class="kw">Wₒ_new</span> = Wₒ <span class="val">-</span> η · (∂L/∂Wₒ)
+
+<span class="cmt">Chain rule via BPTT:</span>
+∂Loss/∂Wₒₗd = (∂Loss/∂O₃) × (∂O₃/∂O₂) × (∂O₂/∂O₁) × (∂O₁/∂Wₒₗd)</pre>
+</div>
+
+<!-- ─────────────────────── 6. PROBLEMS ─────────────────────── -->
+<h2>6 · Problems with Vanilla RNN</h2>
+<div class="problem-grid">
+  <div class="problem-item"><span class="problem-num">① Long-term memory is weak</span><br><span class="problem-text">Forgets early words in long sentences</span></div>
+  <div class="problem-item"><span class="problem-num">② Vanishing Gradient</span><br><span class="problem-text">Gradient → 0; early layers stop learning</span></div>
+  <div class="problem-item"><span class="problem-num">③ Exploding Gradient</span><br><span class="problem-text">Gradient → ∞; training becomes unstable</span></div>
+  <div class="problem-item"><span class="problem-num">④ No long dependencies</span><br><span class="problem-text">Can't link "Rahul" to "he" 2000 words later</span></div>
+  <div class="problem-item" style="grid-column: span 2"><span class="problem-num">⑤ Sequential processing is slow</span><br><span class="problem-text">Can't be parallelized across tokens</span></div>
+</div>
+
+<svg class="diagram" viewBox="0 0 680 110">
+  <!-- Long sentence illustration with fading gradient -->
+  <text x="340" y="22" text-anchor="middle" font-size="11" fill="#8b90a8">Vanishing gradient — early tokens lose influence</text>
+  <rect x="20"  y="35" width="70" height="40" rx="6" fill="#0a2d0a" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="55"  y="59" text-anchor="middle" font-size="11" fill="#4ade80">Rahul</text>
+  <rect x="110" y="35" width="70" height="40" rx="6" fill="#0e200e" stroke="#4ade80" stroke-width="1"/>
+  <text x="145" y="59" text-anchor="middle" font-size="11" fill="#4ade80">lives</text>
+  <rect x="200" y="35" width="70" height="40" rx="6" fill="#141e14" stroke="#8b90a8" stroke-width="1" opacity="0.8"/>
+  <text x="235" y="59" text-anchor="middle" font-size="11" fill="#8b90a8" opacity="0.8">in ...</text>
+  <rect x="290" y="35" width="70" height="40" rx="6" fill="#1a1a1a" stroke="#8b90a8" stroke-width="0.7" opacity="0.5"/>
+  <text x="325" y="59" text-anchor="middle" font-size="11" fill="#8b90a8" opacity="0.5">... many</text>
+  <rect x="380" y="35" width="70" height="40" rx="6" fill="#1d1d1d" stroke="#8b90a8" stroke-width="0.5" opacity="0.3"/>
+  <text x="415" y="59" text-anchor="middle" font-size="11" fill="#8b90a8" opacity="0.3">words</text>
+  <rect x="470" y="35" width="70" height="40" rx="6" fill="#1f1f1f" stroke="#8b90a8" stroke-width="0.3" opacity="0.15"/>
+  <text x="505" y="59" text-anchor="middle" font-size="11" fill="#8b90a8" opacity="0.15">later ...</text>
+  <!-- Question -->
+  <rect x="560" y="35" width="100" height="40" rx="6" fill="#1e1012" stroke="#f87171" stroke-width="1.5"/>
+  <text x="610" y="54" text-anchor="middle" font-size="11" fill="#f87171">Where does</text>
+  <text x="610" y="68" text-anchor="middle" font-size="11" fill="#f87171">he live?</text>
+  <!-- Gradient arrow -->
+  <text x="340" y="97" text-anchor="middle" font-size="11" fill="#f87171">gradient vanishes → "Rahul" forgotten by the time we reach "he"</text>
+</svg>
+
+<div class="warn">Simple RNNs are rarely used today — LSTM and GRU were invented specifically to solve these problems.</div>
+
+<!-- ─────────────────────── 7. LSTM ─────────────────────── -->
+<h2>7 · LSTM — Long Short-Term Memory</h2>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-title">RNN Memory</div>
+    <span class="tag tag-amber">Short-term only</span>
+    <p style="margin-top:8px; font-size:13px">Forgets context after a few tokens</p>
+  </div>
+  <div class="card">
+    <div class="card-title">LSTM Memory</div>
+    <span class="tag tag-green">Long-term</span> <span class="tag tag-blue">Short-term</span>
+    <p style="margin-top:8px; font-size:13px">Maintains both via separate streams</p>
+  </div>
+</div>
+
+<h3>LSTM State Variables</h3>
+<table>
+  <tr><th>Symbol</th><th>Name</th><th>Represents</th></tr>
+  <tr><td><code>Cₜ₋₁</code></td><td>Previous cell state</td><td>Long-term memory</td></tr>
+  <tr><td><code>hₜ₋₁</code></td><td>Previous hidden state</td><td>Short-term memory</td></tr>
+  <tr><td><code>xₜ</code></td><td>Current input</td><td>Word at this timestep</td></tr>
+  <tr><td><code>hₜ</code></td><td>Current hidden state</td><td>Output / new short-term memory</td></tr>
+  <tr><td><code>Cₜ</code></td><td>Current cell state</td><td>Updated long-term memory</td></tr>
+</table>
+
+<h3>LSTM Architecture — 3 Gates</h3>
+
+<svg class="diagram" viewBox="0 0 680 200">
+  <!-- Cell state highway (top) -->
+  <line x1="30" y1="50" x2="650" y2="50" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arr)"/>
+  <text x="40" y="42" font-size="11" fill="#fbbf24">Cₜ₋₁</text>
+  <text x="620" y="42" font-size="11" fill="#fbbf24">Cₜ</text>
+  <!-- Hidden state highway (bottom) -->
+  <line x1="30" y1="170" x2="650" y2="170" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="40" y="185" font-size="11" fill="#4ade80">hₜ₋₁</text>
+  <text x="620" y="185" font-size="11" fill="#4ade80">hₜ</text>
+
+  <!-- Forget gate -->
+  <rect x="120" y="90" width="100" height="60" rx="8" fill="#2d0f0f" stroke="#f87171" stroke-width="1.5"/>
+  <text x="170" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#f87171">Forget</text>
+  <text x="170" y="134" text-anchor="middle" font-size="11" fill="#8b90a8">gate  σ</text>
+  <!-- Forget × on cell state -->
+  <circle cx="170" cy="50" r="10" fill="#2d1a1a" stroke="#f87171" stroke-width="1.2"/>
+  <text x="170" y="55" text-anchor="middle" font-size="13" fill="#f87171">×</text>
+  <line x1="170" y1="90" x2="170" y2="62" stroke="#f87171" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="170" y1="170" x2="170" y2="152" stroke="#f87171" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Input gate -->
+  <rect x="280" y="90" width="100" height="60" rx="8" fill="#1a1400" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="330" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#fbbf24">Input</text>
+  <text x="330" y="134" text-anchor="middle" font-size="11" fill="#8b90a8">gate  σ+tanh</text>
+  <!-- Input + on cell state -->
+  <circle cx="330" cy="50" r="10" fill="#1a1400" stroke="#fbbf24" stroke-width="1.2"/>
+  <text x="330" y="55" text-anchor="middle" font-size="14" fill="#fbbf24">+</text>
+  <line x1="330" y1="90" x2="330" y2="62" stroke="#fbbf24" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="330" y1="170" x2="330" y2="152" stroke="#fbbf24" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Output gate -->
+  <rect x="480" y="90" width="100" height="60" rx="8" fill="#0a1a0a" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="530" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#4ade80">Output</text>
+  <text x="530" y="134" text-anchor="middle" font-size="11" fill="#8b90a8">gate  σ</text>
+  <!-- Output × tanh(Ct) -->
+  <circle cx="530" cy="50" r="10" fill="#0a2d0a" stroke="#4ade80" stroke-width="1.2"/>
+  <text x="530" y="55" text-anchor="middle" font-size="13" fill="#4ade80">×</text>
+  <line x1="530" y1="90" x2="530" y2="62" stroke="#4ade80" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="530" y1="170" x2="530" y2="152" stroke="#4ade80" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Labels -->
+  <text x="30"  y="170" font-size="10" fill="#8b90a8">xₜ ↑</text>
+</svg>
+
+<div class="gate-block gate-forget">
+  <div class="gate-label">① Forget Gate — What to DISCARD from long-term memory</div>
+  <pre>fₜ = <span class="fn">σ</span>( Wf · [hₜ₋₁, xₜ] + bf )   <span class="cmt">output ∈ [0,1] — 0=forget, 1=keep</span></pre>
+  <p style="font-size:13px; margin-top:8px"><strong>Example</strong> — "Riya moved to London" (forget "Delhi", keep "gender", "profession"):</p>
+  <table>
+    <tr><th>Context</th><th>Gate value</th><th>Action</th></tr>
+    <tr><td>Gender</td><td>0.99</td><td><span class="tag tag-green">Keep</span></td></tr>
+    <tr><td>Profession</td><td>0.95</td><td><span class="tag tag-green">Keep</span></td></tr>
+    <tr><td>Delhi</td><td>0.10</td><td><span class="tag tag-red">Forget</span></td></tr>
+    <tr><td>Hospital</td><td>0.85</td><td><span class="tag tag-green">Keep</span></td></tr>
+    <tr><td>London</td><td>0.90</td><td><span class="tag tag-green">Keep (new)</span></td></tr>
+  </table>
+</div>
+
+<div class="gate-block gate-input">
+  <div class="gate-label">② Input Gate — What NEW info to ADD to cell state</div>
+  <pre>iₜ = <span class="fn">σ</span>( Wᵢ · [hₜ₋₁, xₜ] + bᵢ )      <span class="cmt">← 2nd filter</span>
+C̃ₜ = <span class="fn">tanh</span>( Wc · [hₜ₋₁, xₜ] + bc )    <span class="cmt">← candidate cell state</span>
+
+<span class="cmt">Cell state update:</span>
+Cₜ = fₜ * Cₜ₋₁ + iₜ * C̃ₜ            <span class="cmt">← scale old + scale new</span></pre>
+</div>
+
+<div class="gate-block gate-output">
+  <div class="gate-label">③ Output Gate — What to OUTPUT as hidden state</div>
+  <pre>oₜ = <span class="fn">σ</span>( Wₒ · [hₜ₋₁, xₜ] + bₒ )
+hₜ = oₜ * <span class="fn">tanh</span>(Cₜ)                   <span class="cmt">tanh squashes Cₜ to [-1,1]</span></pre>
+</div>
+
+<!-- ─────────────────────── 8. GRU ─────────────────────── -->
+<h2>8 · GRU — Gated Recurrent Unit</h2>
+
+<p>LSTM had 3 gates — complex, slow. GRU simplifies to <strong>2 gates</strong>:</p>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-title">Problems with LSTM</div>
+    <div class="problem-item" style="margin-bottom:6px"><span class="problem-num">① </span>Complex architecture</div>
+    <div class="problem-item" style="margin-bottom:6px"><span class="problem-num">② </span>More training parameters</div>
+    <div class="problem-item"><span class="problem-num">③ </span>Higher time complexity</div>
+  </div>
+  <div class="card">
+    <div class="card-title">GRU Solution</div>
+    <p style="font-size:13px">Merges forget + input into a single <em>update gate</em>.<br>
+    Merges cell state + hidden state.<br>
+    Same performance, fewer parameters.</p>
+  </div>
+</div>
+
+<h3>GRU Equations</h3>
+
+<div class="gate-block gate-update">
+  <div class="gate-label">Update Gate zₜ — Keep old memory or replace?</div>
+  <pre>zₜ = <span class="fn">σ</span>( Wz · [hₜ₋₁, xₜ] )   <span class="cmt">∈ [0,1]</span></pre>
+</div>
+
+<div class="gate-block gate-reset">
+  <div class="gate-label">Reset Gate rₜ — How much past influences new info?</div>
+  <pre>rₜ = <span class="fn">σ</span>( Wr · [hₜ₋₁, xₜ] )   <span class="cmt">∈ [0,1]</span></pre>
+</div>
+
+<div class="card">
+  <div class="card-title">Candidate + Final Hidden State</div>
+  <pre>
+h̃ₜ = <span class="fn">tanh</span>( W · [rₜ * hₜ₋₁, xₜ] )   <span class="cmt">← candidate hidden state</span>
+hₜ  = (1 - zₜ) * hₜ₋₁ + zₜ * h̃ₜ    <span class="cmt">← mix old + new</span></pre>
+</div>
+
+<h3>GRU Example — "Riya moved to London"</h3>
+
+<svg class="diagram" viewBox="0 0 680 140">
+  <!-- Timestamps -->
+  <rect x="40" y="30" width="90" height="60" rx="8" fill="#1e2235" stroke="#6c8fff" stroke-width="1"/>
+  <text x="85" y="55" text-anchor="middle" font-size="12" font-weight="600" fill="#6c8fff">T₁</text>
+  <text x="85" y="72" text-anchor="middle" font-size="11" fill="#8b90a8">Riya</text>
+  <text x="85" y="85" text-anchor="middle" font-size="10" fill="#6c8fff">z=[0.9,0.9]</text>
+
+  <rect x="200" y="30" width="90" height="60" rx="8" fill="#1e2235" stroke="#6c8fff" stroke-width="1"/>
+  <text x="245" y="55" text-anchor="middle" font-size="12" font-weight="600" fill="#6c8fff">T₂</text>
+  <text x="245" y="72" text-anchor="middle" font-size="11" fill="#8b90a8">lives Delhi</text>
+  <text x="245" y="85" text-anchor="middle" font-size="10" fill="#6c8fff">z=[0.9,0.9]</text>
+
+  <rect x="360" y="30" width="90" height="60" rx="8" fill="#221a00" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="405" y="55" text-anchor="middle" font-size="12" font-weight="600" fill="#fbbf24">T₃</text>
+  <text x="405" y="72" text-anchor="middle" font-size="11" fill="#8b90a8">London</text>
+  <text x="405" y="85" text-anchor="middle" font-size="10" fill="#fbbf24">z=[0.1,0.1]</text>
+
+  <line x1="132" y1="60" x2="198" y2="60" stroke="#6c8fff" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="292" y1="60" x2="358" y2="60" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Labels -->
+  <text x="165" y="55" text-anchor="middle" font-size="10" fill="#8b90a8">hₜ</text>
+  <text x="325" y="55" text-anchor="middle" font-size="10" fill="#8b90a8">hₜ</text>
+
+  <!-- Annotations -->
+  <rect x="480" y="20" width="180" height="50" rx="6" fill="#0a2d0a" stroke="#4ade80" stroke-width="1"/>
+  <text x="570" y="42" text-anchor="middle" font-size="11" fill="#4ade80">z = [0.9, 0.9]</text>
+  <text x="570" y="58" text-anchor="middle" font-size="11" fill="#8b90a8">High → Keep past memory</text>
+
+  <rect x="480" y="82" width="180" height="50" rx="6" fill="#2d1a00" stroke="#fbbf24" stroke-width="1"/>
+  <text x="570" y="104" text-anchor="middle" font-size="11" fill="#fbbf24">z = [0.1, 0.1]</text>
+  <text x="570" y="120" text-anchor="middle" font-size="11" fill="#8b90a8">Low → Update past (Delhi→London)</text>
+</svg>
+
+<div class="tip">GRU summary: (1) creates new info from the word, (2) mixes it with old memory, (3) mixing ratio decided by update gate.</div>
+
+<!-- ─────────────────────── 9. ACTIVATION FUNCTIONS ─────────────────────── -->
+<h2>9 · Activation Functions</h2>
+<table>
+  <tr><th>Function</th><th>Range</th><th>Used In</th></tr>
+  <tr><td><code>tanh</code></td><td>[-1, 1]</td><td>RNN/LSTM/GRU hidden layers</td></tr>
+  <tr><td><code>sigmoid σ</code></td><td>[0, 1]</td><td>All gates (forget, input, output, reset, update)</td></tr>
+</table>
+<h3>Element-wise Operations</h3>
+<pre>
+× → element-wise multiplication   e.g. [1,2,3] × [3,4,5] = [3,8,15]
++ → element-wise addition          e.g. [1,2,3] + [3,4,5] = [4,6,8]</pre>
+
+<!-- ─────────────────────── 10. COMPARISON ─────────────────────── -->
+<h2>10 · RNN vs LSTM vs GRU — Quick Comparison</h2>
+<table>
+  <tr><th>Feature</th><th>RNN</th><th>LSTM</th><th>GRU</th></tr>
+  <tr>
+    <td>Memory</td>
+    <td><span class="tag tag-amber">Short-term only</span></td>
+    <td><span class="tag tag-green">Long + Short</span></td>
+    <td><span class="tag tag-green">Long + Short</span></td>
+  </tr>
+  <tr>
+    <td>Gates</td>
+    <td>None</td>
+    <td>3 (forget, input, output)</td>
+    <td>2 (update, reset)</td>
+  </tr>
+  <tr>
+    <td>Vanishing gradient</td>
+    <td><span class="tag tag-red">Suffers</span></td>
+    <td><span class="tag tag-green">Handles</span></td>
+    <td><span class="tag tag-green">Handles</span></td>
+  </tr>
+  <tr>
+    <td>Parameters</td>
+    <td>Fewest</td>
+    <td>Most</td>
+    <td>Moderate</td>
+  </tr>
+  <tr>
+    <td>Speed</td>
+    <td>Fast</td>
+    <td>Slowest</td>
+    <td>Faster than LSTM</td>
+  </tr>
+  <tr>
+    <td>Long dependencies</td>
+    <td><span class="tag tag-red">No</span></td>
+    <td><span class="tag tag-green">Yes</span></td>
+    <td><span class="tag tag-green">Yes</span></td>
+  </tr>
+  <tr>
+    <td>Used today</td>
+    <td><span class="tag tag-red">Rarely</span></td>
+    <td><span class="tag tag-green">Common</span></td>
+    <td><span class="tag tag-green">Common</span></td>
+  </tr>
+</table>
+
+<!-- ─────────────────────── 11. ALL FORMULAS ─────────────────────── -->
+<h2>11 · All Formulas at a Glance</h2>
+
+<div class="card">
+  <div class="card-title">RNN</div>
+  <pre>
+hₜ = <span class="fn">tanh</span>( xₜ·Wᵢ + hₜ₋₁·Wₕ + b )
+ŷ  = <span class="fn">σ</span>( hₜ·Wₒ )</pre>
+</div>
+
+<div class="card">
+  <div class="card-title">LSTM</div>
+  <pre>
+fₜ = <span class="fn">σ</span>(Wf·[hₜ₋₁,xₜ] + bf)           <span class="cmt">← Forget gate</span>
+iₜ = <span class="fn">σ</span>(Wᵢ·[hₜ₋₁,xₜ] + bᵢ)           <span class="cmt">← Input gate</span>
+C̃ₜ = <span class="fn">tanh</span>(Wc·[hₜ₋₁,xₜ] + bc)        <span class="cmt">← Candidate cell state</span>
+Cₜ = fₜ * Cₜ₋₁ + iₜ * C̃ₜ            <span class="cmt">← Cell state update</span>
+oₜ = <span class="fn">σ</span>(Wₒ·[hₜ₋₁,xₜ] + bₒ)           <span class="cmt">← Output gate</span>
+hₜ = oₜ * <span class="fn">tanh</span>(Cₜ)                   <span class="cmt">← New hidden state</span></pre>
+</div>
+
+<div class="card">
+  <div class="card-title">GRU</div>
+  <pre>
+zₜ = <span class="fn">σ</span>(Wz·[hₜ₋₁,xₜ])                <span class="cmt">← Update gate</span>
+rₜ = <span class="fn">σ</span>(Wr·[hₜ₋₁,xₜ])                <span class="cmt">← Reset gate</span>
+h̃ₜ = <span class="fn">tanh</span>(W·[rₜ*hₜ₋₁, xₜ])         <span class="cmt">← Candidate hidden state</span>
+hₜ = (1-zₜ)*hₜ₋₁ + zₜ*h̃ₜ            <span class="cmt">← Final hidden state</span></pre>
+</div>
+
+<div class="card">
+  <div class="card-title">Loss + Optimisation</div>
+  <pre>
+L     = <span class="val">-y</span>·<span class="fn">log</span>(ŷ) <span class="val">-</span> (1<span class="val">-y</span>)·<span class="fn">log</span>(1<span class="val">-</span>ŷ)  <span class="cmt">← Binary cross-entropy</span>
+W_new = W_old <span class="val">-</span> η · (∂L/∂W)                <span class="cmt">← Gradient descent</span></pre>
+</div>
+
+<hr class="sep">
+<p style="font-size:12px; color:var(--muted); text-align:center">
+  Notes compiled from RNN lecture slides · Deep Learning &gt; ANN / CNN / RNN · Sequential data, BPTT, LSTM gates, GRU gates
+</p>
+
+</div>
+</body>
+</html>
