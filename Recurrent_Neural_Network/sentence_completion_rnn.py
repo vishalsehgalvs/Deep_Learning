@@ -22,7 +22,7 @@
 #  Step 6  →  One-hot encode — each target word becomes a 10,000-long vector
 #  Step 7  →  Build models — a SimpleRNN and an LSTM side by side
 #  Step 8  →  Train the LSTM — 10 epochs, batch size 128, 10% validation
-#  Step 9  →  Save the trained LSTM to lstm_model.keras
+#  Step 9  →  Save the trained LSTM to models/lstm_model.keras
 #  Step 10 →  (Optional) Use the predictor function to generate next words
 #
 # =============================================================================
@@ -241,8 +241,8 @@ lstm_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['
 #     batch_size=batch_size,
 #     validation_split=0.2
 # )
-# rnn_model.save('rnn_model.keras')
-# rnn_model.save('rnn_model.h5')
+# rnn_model.save('models/rnn_model.keras')
+# rnn_model.save('models/rnn_model.h5')
 
 # ──────────────────────────────────────────────
 # Train the LSTM model
@@ -259,8 +259,8 @@ history_rnn = lstm_model.fit(
     validation_split=0.1)
 
 # Save the trained model (.keras is the recommended modern format)
-lstm_model.save('lstm_model.keras')
-lstm_model.save('lstm_model.h5')
+lstm_model.save('models/lstm_model.keras')
+lstm_model.save('models/lstm_model.h5')
 
 # ──────────────────────────────────────────────
 # Predictor function (uncomment to use after training)
