@@ -6,10 +6,11 @@ This repo is where I'm documenting everything I learn about Deep Learning — in
 
 ## What's in here
 
-| Folder                          | What it covers                                     |
-| ------------------------------- | -------------------------------------------------- |
-| `Artificial_Neural_Network/`    | ANN basics and code — binary and multi-class       |
-| `Convolutional_Neural_Network/` | CNN theory and code — handwritten digit classifier |
+| Folder                          | What it covers                                                  |
+| ------------------------------- | --------------------------------------------------------------- |
+| `Artificial_Neural_Network/`    | ANN basics and code — binary and multi-class                    |
+| `Convolutional_Neural_Network/` | CNN theory and code — handwritten digit classifier              |
+| `Recurrent_Neural_Network/`     | RNN/LSTM theory and code — sentence completion on famous quotes |
 
 ---
 
@@ -137,6 +138,13 @@ That's why we move to full ANNs with better activation functions.
 - [ ] Batch Normalization — stabilising training
 - [ ] Transfer Learning — reusing a pre-trained CNN instead of training from scratch
 - [ ] Famous CNN architectures — LeNet, AlexNet, VGG, ResNet
+- [x] Why ANNs fail on sequential data (see `Recurrent_Neural_Network/notes.md`)
+- [x] RNN theory — hidden state, timesteps, forward pass through time (see `Recurrent_Neural_Network/notes.md`)
+- [x] LSTM — forget gate, input gate, output gate, cell state explained (see `Recurrent_Neural_Network/notes.md`)
+- [x] GRU — reset gate, update gate, simplified LSTM (see `Recurrent_Neural_Network/notes.md`)
+- [x] RNN project — sentence completion model trained on 3,000+ famous quotes (see `Recurrent_Neural_Network/sentence_completion_rnn.py`)
+- [ ] Vanishing gradient deep dive — the maths behind why memory fades
+- [ ] Transformers — how attention replaced RNNs entirely
 
 ---
 
@@ -344,20 +352,92 @@ _Side-by-side accuracy comparison of the Perceptron baseline vs the CNN — show
 
 ---
 
+## The RNN Project — Sentence Completion with RNN & LSTM (sentence_completion_rnn.py)
+
+The RNN project trains two models on 3,038 famous quotes to predict the next word in any sentence — like autocomplete.
+
+```
+Problem: What word comes next?
+
+Input:  "the world is"
+Output: "beautiful"  (or whichever word the model learned follows this pattern)
+```
+
+### Dataset
+
+3,038 famous quotes from public figures stored in `data/qoute_dataset.csv`.
+
+### How training samples are built
+
+For each quote, every possible prefix → next word pair is extracted. A single 20-word quote gives 19 training samples. 3,038 quotes expand to **85,271 training samples**.
+
+```
+Quote: "the world as we have"
+
+  Input             →  Target
+  "the"             →  "world"
+  "the world"       →  "as"
+  "the world as"    →  "we"
+  "the world as we" →  "have"
+```
+
+### Model 1 — SimpleRNN (for comparison, training commented out)
+
+```
+  Embedding(10000 vocab, 50 dims)  →  SimpleRNN(128)  →  Dense(10000, Softmax)
+```
+
+### Model 2 — LSTM (the one we train and save)
+
+```
+  Embedding(10000 vocab, 50 dims)  →  LSTM(128)  →  Dense(10000, Softmax)
+```
+
+LSTM remembers context from much earlier in the sentence thanks to its two memory streams (hidden state + cell state). Far better than SimpleRNN for long sequences.
+
+### Training
+
+| Setting          | Value                    |
+| ---------------- | ------------------------ |
+| Optimizer        | Adam                     |
+| Loss             | Categorical Crossentropy |
+| Epochs           | 10                       |
+| Batch size       | 128                      |
+| Validation split | 10%                      |
+
+### Training time
+
+![RNN training time](Recurrent_Neural_Network/images/training%20time%20for%20rnn%20model.png)
+
+_SimpleRNN training — each epoch is fast but the model struggles with long-range patterns._
+
+![LSTM training time](Recurrent_Neural_Network/images/training%20time%20for%20ltsm%20model.jpg)
+
+_LSTM training — each epoch takes longer but the model learns richer patterns and remembers more context across a sentence._
+
+---
+
 ## Files in this repo
 
-| File                                                   | What it is                                                    |
-| ------------------------------------------------------ | ------------------------------------------------------------- |
-| `Artificial_Neural_Network/plant_water_predictor.py`   | First ANN — binary classification, plant watering             |
-| `Artificial_Neural_Network/iris_species_classifier.py` | Second ANN — multi-class classification, Iris species         |
-| `Artificial_Neural_Network/Iris.csv`                   | Dataset used by iris_species_classifier.py                    |
-| `Artificial_Neural_Network/notes.md`                   | Core ANN theory — forward prop, backprop, training loop       |
-| `Artificial_Neural_Network/activation_functions.md`    | All activation functions with graphs and formulas             |
-| `Artificial_Neural_Network/loss_functions.md`          | All loss functions with graphs and pros/cons                  |
-| `Artificial_Neural_Network/optimizers.md`              | All optimizers with graphs, formulas and code examples        |
-| `Artificial_Neural_Network/blackbox_vs_whitebox.md`    | What black box and white box models mean in plain words       |
-| `Convolutional_Neural_Network/cnn.py`                  | CNN project — Perceptron baseline + CNN, training, evaluation |
-| `Convolutional_Neural_Network/data/train.csv`          | 42,000 labelled handwritten digit images (Kaggle MNIST)       |
-| `Convolutional_Neural_Network/data/test.csv`           | 28,000 unlabelled digit images (Kaggle submission format)     |
-| `Convolutional_Neural_Network/notes.md`                | Full CNN theory — filters, pooling, padding, dropout and more |
-| `Convolutional_Neural_Network/README.md`               | CNN project overview — models, architecture, how to run       |
+| File                                                   | What it is                                                             |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `Artificial_Neural_Network/plant_water_predictor.py`   | First ANN — binary classification, plant watering                      |
+| `Artificial_Neural_Network/iris_species_classifier.py` | Second ANN — multi-class classification, Iris species                  |
+| `Artificial_Neural_Network/Iris.csv`                   | Dataset used by iris_species_classifier.py                             |
+| `Artificial_Neural_Network/notes.md`                   | Core ANN theory — forward prop, backprop, training loop                |
+| `Artificial_Neural_Network/activation_functions.md`    | All activation functions with graphs and formulas                      |
+| `Artificial_Neural_Network/loss_functions.md`          | All loss functions with graphs and pros/cons                           |
+| `Artificial_Neural_Network/optimizers.md`              | All optimizers with graphs, formulas and code examples                 |
+| `Artificial_Neural_Network/blackbox_vs_whitebox.md`    | What black box and white box models mean in plain words                |
+| `Convolutional_Neural_Network/cnn.py`                  | CNN project — Perceptron baseline + CNN, training, evaluation          |
+| `Convolutional_Neural_Network/data/train.csv`          | 42,000 labelled handwritten digit images (Kaggle MNIST)                |
+| `Convolutional_Neural_Network/data/test.csv`           | 28,000 unlabelled digit images (Kaggle submission format)              |
+| `Convolutional_Neural_Network/notes.md`                | Full CNN theory — filters, pooling, padding, dropout and more          |
+| `Convolutional_Neural_Network/README.md`               | CNN project overview — models, architecture, how to run                |
+| `Recurrent_Neural_Network/sentence_completion_rnn.py`  | RNN/LSTM project — next word prediction trained on 3,038 famous quotes |
+| `Recurrent_Neural_Network/sentiment_classifier_rnn.py` | Earlier RNN project — binary sentiment classifier                      |
+| `Recurrent_Neural_Network/next_word_prediction_ui.py`  | Streamlit web UI to interact with the trained LSTM model               |
+| `Recurrent_Neural_Network/data/qoute_dataset.csv`      | 3,038 famous quotes used for training                                  |
+| `Recurrent_Neural_Network/notes.md`                    | Full RNN theory — RNN, LSTM, GRU, gates, vanishing gradients and more  |
+| `Recurrent_Neural_Network/rnn_revision_notes.md`       | Quick revision cheat sheet for RNN, LSTM, GRU                          |
+| `Recurrent_Neural_Network/README.md`                   | RNN project overview — pipeline, models, architecture, how to run      |
