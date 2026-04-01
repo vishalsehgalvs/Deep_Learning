@@ -180,6 +180,20 @@ The decoder generates "Ich" and needs to know it came from "I" — but the conte
   — like a person who forgets the first half of a conversation.
 ```
 
+```mermaid
+flowchart LR
+    subgraph ENC["Encoder — reads words one by one"]
+        W1["'The'"] --> h1["h₁"]
+        h1 --> W2["'bank'"] --> h2["h₂"]
+        h2 --> W3["...many more words..."] --> hn["hₙ — final state"]
+    end
+    hn --> CV["📦 Context Vector — Fixed Size"]
+    CV --> BOT["⚠️ Bottleneck — ALL meaning squeezed into one tiny vector"]
+    BOT --> DEC["Decoder — only this one summary to work from"]
+    style BOT fill:#ffcccc,stroke:#cc0000,color:#000000
+    style CV fill:#ffe0cc,stroke:#ff6600,color:#000000
+```
+
 This is what **Attention** was designed to fix.
 
 ---
@@ -249,6 +263,27 @@ In plain English: **softmax turns the scores into percentages**. The encoder hid
   "liebe"       [0.15]  [0.75]  [0.10]   ← focuses on "love"
   "Fußball"     [0.05]  [0.10]  [0.85]   ← focuses on "football"
   ─────────────────────────────────────────────────────
+```
+
+```mermaid
+flowchart TB
+    DS["Decoder state s — about to generate Fußball"] --> SC["Score: s · hᵢ for each hidden state"]
+    subgraph ENC["Encoder Hidden States — all preserved, none thrown away"]
+        h1["h₁ — I"]
+        h2["h₂ — love"]
+        h3["h₃ — football ⭐"]
+    end
+    h1 --> SC
+    h2 --> SC
+    h3 --> SC
+    SC --> SM["Softmax → α₁=0.05  α₂=0.10  α₃=0.85"]
+    h1 --> WS["Weighted Sum → Context c"]
+    h2 --> WS
+    h3 --> WS
+    SM --> WS
+    WS --> CT["🎯 Context c — focused on football, not a blurry average"]
+    style h3 fill:#ccffcc,stroke:#009900,color:#000000
+    style CT fill:#ccffcc,stroke:#009900,color:#000000
 ```
 
 ### With attention — the full diagram
@@ -391,6 +426,19 @@ In plain English:
     0.1 × v₁("I")  +  0.2 × v₂("love")  +  0.7 × v₃("football")
 ```
 
+```mermaid
+flowchart TB
+    X["Word embedding x"] --> Q["Q = x · Wq — Query: what am I looking for?"]
+    X --> K["K = x · Wk — Key: what do I represent?"]
+    X --> V["V = x · Wv — Value: what info do I carry?"]
+    Q --> DOT["Q · Kᵀ — similarity score with every other word"]
+    K --> DOT
+    DOT --> DIV["÷ √dₖ — scale down to keep gradients stable"]
+    DIV --> SM["softmax → attention weights α (rows sum to 1)"]
+    V --> OUT["α · V — weighted blend = new rich representation"]
+    SM --> OUT
+```
+
 Every word ends up with a new, richer representation that includes context from the whole sentence — in **one single parallel operation**.
 
 ---
@@ -428,6 +476,20 @@ $$\text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, ..., \text{head}_h) \cd
 where each head is:
 
 $$\text{head}_i = \text{Attention}(QW_i^Q,\ KW_i^K,\ VW_i^V)$$
+
+```mermaid
+flowchart TB
+    IN["Input Embeddings"] --> H1["Head 1 — grammar patterns"]
+    IN --> H2["Head 2 — word meaning"]
+    IN --> H3["Head 3 — pronoun coreference"]
+    IN --> HN["Head h — other relationships"]
+    H1 --> CC["Concat all h head outputs"]
+    H2 --> CC
+    H3 --> CC
+    HN --> CC
+    CC --> WO["Linear projection × Wᴼ"]
+    WO --> OUT["Final output — each word informed by h different perspectives"]
+```
 
 ---
 
@@ -512,6 +574,33 @@ The Transformer is made of two stacks: an **Encoder** (understands the input) an
   │            ↓  (repeat × N)                                  │
   │  Linear + Softmax → next word probabilities                 │
   └─────────────────────────────────────────────────────────────┘
+```
+
+```mermaid
+flowchart TB
+    subgraph INPUT["📥 Input Side"]
+        IT["Input Tokens"] --> PE["Embedding + Positional Encoding"]
+    end
+    subgraph ENC["📘 Encoder Block × N"]
+        PE --> MHA["Multi-Head Self-Attention"]
+        MHA --> AN1["Add and Norm"]
+        AN1 --> FFN["Feed-Forward Network"]
+        FFN --> AN2["Add and Norm"]
+    end
+    subgraph TGT["📤 Output Side"]
+        OT["Output Tokens so far"] --> OPE["Embedding + Positional Encoding"]
+    end
+    subgraph DEC["📗 Decoder Block × N"]
+        OPE --> MMHA["Masked Self-Attention"]
+        MMHA --> DAN1["Add and Norm"]
+        DAN1 --> CA["Cross-Attention — Q from decoder, K and V from encoder"]
+        AN2 --> CA
+        CA --> DAN2["Add and Norm"]
+        DAN2 --> DFFN["Feed-Forward Network"]
+        DFFN --> DAN3["Add and Norm"]
+    end
+    DAN3 --> LIN["Linear + Softmax"]
+    LIN --> PRED["🎯 Predicted Next Token"]
 ```
 
 ### Key components explained
@@ -627,6 +716,290 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\righ
 | T5                  | Google  | Text-to-text: reframes every NLP task as seq2seq      |
 | LLaMA               | Meta    | Open-source large language model                      |
 | Gemini              | Google  | Multimodal — handles text, images, audio              |
+
+---
+
+## Why Old Models Were Not Enough
+
+ANNs, RNNs, and CNNs each had their own limitations. To solve harder language tasks — especially ones where the output is a completely new sequence — we needed a new design.
+
+---
+
+## 3 Types of Models (Based on Input/Output)
+
+| Type                         | What it does                      | Example                         |
+| ---------------------------- | --------------------------------- | ------------------------------- |
+| Single input → Single output | One thing in, one thing out       | Spam detection                  |
+| Sequence → Label             | A sentence in, one label out      | Sentiment analysis              |
+| Sequence → Sequence          | A sentence in, a new sentence out | Translation, Q&A, summarisation |
+
+The third type — **Sequence to Sequence (Seq2Seq)** — is what powers most Generative AI today. It uses two parts: an **Encoder** and a **Decoder**.
+
+---
+
+## Encoder–Decoder Architecture
+
+Think of it like a two-person relay:
+
+1. The **Encoder** reads the full input and summarises it into a single compact representation called the **Context Vector**.
+2. The **Decoder** takes that context vector and generates the output one word at a time.
+
+```
+Input Sentence → Encoder → Context Vector → Decoder → Output Sentence
+```
+
+---
+
+## The Encoder
+
+The encoder's only job is to **understand the input** — it does not produce any output words.
+
+- Can use RNN, LSTM, GRU, etc. under the hood
+- Reads the input from left to right
+- Compresses everything into a fixed-size context vector
+
+---
+
+## The Decoder
+
+The decoder's job is to **generate the output**, one word at a time. But it behaves differently depending on whether it is training or predicting.
+
+**During Training (Teacher Forcing):**
+
+- The decoder is shown the correct previous word at every step
+- It gets "helped" — like a student using an answer key while practising
+
+**During Prediction:**
+
+- The decoder is on its own — no answer key
+- It uses its own previously generated word as the next input
+- Starts with a special `<start>` token
+
+**Other key facts about the decoder:**
+
+- It is probability-based — it always ends with a Softmax to pick the most likely next word
+- It depends on the previous word at every step
+
+---
+
+## Problems with the Basic Encoder–Decoder
+
+| Problem                       | What it means                                                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Information Bottleneck**    | The entire input is squeezed into one fixed-size vector — too small for long sentences                           |
+| **No word-to-word alignment** | The decoder has no way to know which input word is most relevant right now                                       |
+| **Exposure Bias**             | During training the decoder got "helped" (teacher forcing), but at prediction time it is on its own — a mismatch |
+| **Long sentence failure**     | The longer the input, the harder it is for the encoder to capture everything in one vector                       |
+
+---
+
+## Attention Mechanism — The Fix
+
+> _"What if the decoder could look back at the input whenever it needed, instead of relying on just one context vector?"_
+
+That is exactly what **Attention** does.
+
+Instead of one fixed context vector for the whole sentence, attention lets the decoder create a **fresh, custom context vector for each output word** — by looking at all encoder hidden states and deciding which ones matter most right now.
+
+**How it works (simplified):**
+
+- The encoder produces a hidden state at every input word: `h1, h2, h3, h4`
+- For each output word, attention assigns a weight (`α`) to each hidden state — higher weight = more relevant
+- A weighted sum is computed:
+
+```
+c1 = α1·h1 + α2·h2 + α3·h3 + α4·h4
+```
+
+- These weights change for every output word — so when translating "bank", the model pays more attention to the word "money" in the input than to "river"
+
+This small change made a massive difference in translation quality for long sentences.
+
+---
+
+## How Attention Weights Are Calculated
+
+You might wonder — how does the model decide _how much attention_ to give each word?
+
+It uses a small scoring function that compares the **decoder's current state** with each **encoder hidden state**. The score tells us: "how relevant is this encoder word to what the decoder is trying to generate right now?"
+
+The steps are:
+
+1. **Score** — compare decoder state `s` with each encoder hidden state `h`:
+
+   ```
+   score(s, hᵢ) = sᵀ · hᵢ        (dot product — simplest form)
+   ```
+
+2. **Normalise** — run all scores through Softmax so they add up to 1:
+
+   ```
+   αᵢ = softmax(score(s, hᵢ))
+   ```
+
+3. **Weighted sum** — multiply each hidden state by its weight and add them up:
+   ```
+   context vector c = Σ αᵢ · hᵢ
+   ```
+
+This is repeated fresh for every single output word the decoder generates.
+
+---
+
+## A Real-World Analogy for Attention
+
+Imagine you are translating the sentence:
+
+> _"The cat sat on the mat"_
+
+When generating the French word for "cat" (→ _le chat_), you naturally focus your eyes on the word **"cat"** in the English sentence, not on "mat" or "sat".
+
+That is exactly what attention does — it tells the decoder _where to look_ in the input at each step.
+
+Without attention, the decoder was like a student who had to memorise the entire paragraph before answering a question. With attention, the student can flip back to the relevant paragraph while answering. Much easier.
+
+---
+
+## Types of Attention
+
+Over time, researchers came up with different flavours of attention:
+
+| Type                                 | Description                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| **Bahdanau Attention** (Additive)    | The original attention — uses a small neural network to compute scores               |
+| **Luong Attention** (Multiplicative) | Simpler — uses dot product between decoder and encoder states                        |
+| **Self-Attention**                   | A word attends to _other words in the same sentence_ — used in Transformers          |
+| **Multi-Head Attention**             | Run attention multiple times in parallel, each "head" learns different relationships |
+
+Self-attention and multi-head attention are the core building blocks of the **Transformer** architecture.
+
+---
+
+## Self-Attention — Words Talking to Each Other
+
+In a regular sentence, words depend on each other:
+
+> _"The animal didn't cross the street because **it** was too tired"_
+
+What does "it" refer to — the animal or the street? Humans understand it is the animal. Self-attention lets the model figure this out too, by letting every word look at every other word in the same sentence.
+
+**How self-attention works:**
+
+Each word is turned into three vectors:
+
+- **Query (Q)** — "what am I looking for?"
+- **Key (K)** — "what do I contain?"
+- **Value (V)** — "what information do I carry?"
+
+The attention score between two words is:
+
+```
+Attention(Q, K, V) = softmax( Q·Kᵀ / √dₖ ) · V
+```
+
+- `Q·Kᵀ` — how well does this word match each other word?
+- `/ √dₖ` — divide by square root of key size to prevent huge numbers (keeps gradients stable)
+- `softmax(...)` — convert scores to weights that sum to 1
+- `· V` — use those weights to take a weighted mix of all values
+
+The result is a new representation for each word — now enriched with context from all other words.
+
+---
+
+## Multi-Head Attention — Several Perspectives at Once
+
+Running attention once gives you one perspective. But a sentence can have multiple kinds of relationships:
+
+- Subject–verb agreement
+- Pronoun–reference ("it" → "animal")
+- Modifier–noun ("tired" → "animal")
+
+**Multi-head attention** runs self-attention several times in parallel, each with different Q, K, V weight matrices. Each "head" learns to focus on a different type of relationship. The results are then concatenated and projected back.
+
+```
+MultiHead(Q, K, V) = Concat(head₁, head₂, ..., headₕ) · Wᴼ
+```
+
+Think of it like a panel of reviewers — each one reads the sentence with a different lens, and their observations are combined at the end.
+
+---
+
+## The Transformer — Putting It All Together
+
+The Transformer was introduced in the 2017 paper **"Attention Is All You Need"** (Vaswani et al.). It threw away RNNs completely and built everything on attention.
+
+**Key differences from RNN-based seq2seq:**
+
+| Feature                 | RNN Seq2Seq                | Transformer                    |
+| ----------------------- | -------------------------- | ------------------------------ |
+| Processes words         | One at a time (sequential) | All at once (parallel)         |
+| Long-range dependencies | Struggles                  | Handles easily via attention   |
+| Training speed          | Slow                       | Much faster (parallelisable)   |
+| Memory of context       | Fades over distance        | Attention covers full sequence |
+
+**High-level Transformer structure:**
+
+```
+Input Tokens
+    ↓
+Embedding + Positional Encoding
+    ↓
+[ Encoder Block × N ]
+  - Multi-Head Self-Attention
+  - Feed Forward Network
+  - Add & Norm (residual connections)
+    ↓
+Context Representations
+    ↓
+[ Decoder Block × N ]
+  - Masked Multi-Head Self-Attention
+  - Cross-Attention (looks at encoder output)
+  - Feed Forward Network
+  - Add & Norm
+    ↓
+Linear + Softmax
+    ↓
+Output Tokens
+```
+
+---
+
+## Positional Encoding — Giving Words a Sense of Order
+
+Self-attention sees all words at once — but that means it has no idea about _order_. The word "dog bites man" and "man bites dog" would look identical without some notion of position.
+
+**Positional encoding** adds a position signal to each word embedding before it enters the Transformer. The original paper used sine and cosine functions at different frequencies:
+
+```
+PE(pos, 2i)   = sin(pos / 10000^(2i/dmodel))
+PE(pos, 2i+1) = cos(pos / 10000^(2i/dmodel))
+```
+
+- `pos` = position of the word in the sequence
+- `i` = dimension index
+- `dmodel` = size of the embedding
+
+Each position gets a unique pattern of values. The model learns to use these patterns to understand word order.
+
+Think of it like seat numbers in a cinema — the movie (word content) is the same, but the seat number (positional encoding) tells you exactly where each person sits.
+
+---
+
+## Residual Connections and Layer Normalisation
+
+Inside each Transformer block, there are two small but important tricks:
+
+**Residual Connection (Add):**
+Instead of just passing the output forward, the input is _added back_ to the output:
+
+```
+output = LayerNorm(x + SubLayer(x))
+```
+
+This helps gradients flow during training and prevents information from being completely lost as it passes through many layers.
+
+**Layer Normalisation (Norm):**
+Normalises the values across features for each token individually. This stabilises training and helps the model learn faster.
 
 ---
 
