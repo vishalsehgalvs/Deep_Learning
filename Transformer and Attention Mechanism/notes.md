@@ -286,6 +286,8 @@ flowchart TB
     style CT fill:#ccffcc,stroke:#009900,color:#000000
 ```
 
+![Attention Mechanism](<attention mechnaism.jpg>)
+
 ### With attention — the full diagram
 
 ```
@@ -1000,6 +1002,349 @@ This helps gradients flow during training and prevents information from being co
 
 **Layer Normalisation (Norm):**
 Normalises the values across features for each token individually. This stabilises training and helps the model learn faster.
+
+---
+
+## Why Attention + RNN Still Had Problems
+
+> You gave the decoder eyes — but the encoder was still reading word-by-word, one step at a time.
+
+Attention fixed the **decoder's** problem beautifully. It could now look at every encoder hidden state and pick the relevant ones. But the **encoder itself** was still an RNN under the hood — it still had to process one word at a time, left to right, step by step.
+
+That single constraint caused five cascading problems:
+
+| Problem                         | What it means in practice                                                                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Still sequential**            | The encoder cannot process word 3 until it finishes word 2. No matter how fast your hardware is, you are waiting for each step to finish. |
+| **Signal decays over distance** | Information from early words must travel through many hidden states to reach the end. A little gets lost at each step.                    |
+| **Memory bottleneck**           | Each hidden state has a fixed size. As sentences grow longer, older information gets slowly overwritten.                                  |
+| **Wasted GPU power**            | GPUs are built for massive parallel matrix operations. A sequential RNN uses only a tiny fraction of that capacity at any moment.         |
+| **Patchy design**               | Attention was bolted on top of the RNN as an add-on. It worked, but the architecture was messy — not clean, not scalable.                 |
+
+```mermaid
+flowchart LR
+    subgraph SEQ["RNN Encoder — still one word at a time"]
+        direction LR
+        W1["word 1"] --> R1["step 1"]
+        R1 --> W2["word 2"] --> R2["step 2"]
+        R2 --> W3["word 3"] --> R3["step 3"]
+        R3 --> dots["..."] --> Rn["step n"]
+    end
+    Rn --> ATT["Attention layer\n(added on top)"]
+    ATT --> DEC["Decoder"]
+    WARN["⚠️ Word 3 cannot start until word 2 is done\nGPU sits mostly idle"]
+    style SEQ fill:#fff3cc,stroke:#cc8800,color:#000000
+    style WARN fill:#ffcccc,stroke:#cc0000,color:#000000
+```
+
+The conclusion researchers reached: **stop using an RNN at all**.
+
+---
+
+## How the Transformer Removed the Last Bottleneck
+
+> **The big idea:** Skip the sequential reading entirely. Apply attention directly — between all words at once — right from the start.
+
+This was the core insight of the 2017 paper **"Attention Is All You Need"** (Vaswani et al., Google Brain). Instead of reading words one-by-one and then letting the decoder look back, the Transformer reads the **entire sentence in parallel** using attention from the very first layer.
+
+```
+  RNN + Attention:
+  ─────────────────────────────────────────────────────────────
+  Encode word 1 → word 2 → word 3 → ... → word N   (sequential)
+  Then apply attention on top of these hidden states.
+  Time: proportional to sequence length.
+
+  Transformer:
+  ─────────────────────────────────────────────────────────────
+  Embed ALL words at once.
+  Apply self-attention between ALL word pairs — one matrix op.
+  Repeat N times (stacked layers, all parallelisable).
+  Time: one pass per layer regardless of sentence length.
+```
+
+```mermaid
+flowchart TB
+    subgraph OLD["RNN + Attention — old approach"]
+        O1["word1 → step1 → word2 → step2 → ... → stepN"]
+        O1 --> O2["attention bolted on top"]
+        style O1 fill:#ffcccc,color:#000000
+        style O2 fill:#ffcccc,color:#000000
+    end
+    subgraph NEW["Transformer — new approach"]
+        N1["word1   word2   word3   ...   wordN   (all at once)"]
+        N1 --> N2["Self-Attention between ALL pairs simultaneously"]
+        N2 --> N3["Feed-Forward Network per word"]
+        style N1 fill:#ccffcc,color:#000000
+        style N2 fill:#ccffcc,color:#000000
+        style N3 fill:#ccffcc,color:#000000
+    end
+    OLD -->|"replaced by"| NEW
+```
+
+Result: faster training, better long-range connections, a cleaner and more scalable architecture.
+
+---
+
+## What Can a Transformer Do?
+
+A Transformer is a general-purpose sequence machine. It is not limited to text — any data that can be broken into a sequence of tokens works.
+
+![What are Transformers](_what_are_transformers_.png)
+
+| Input | Output | Real-world example                                 |
+| ----- | ------ | -------------------------------------------------- |
+| Text  | Text   | Translation, summarisation, Q&A, chatbots          |
+| Image | Text   | Image captioning, visual question-answering        |
+| Text  | Image  | DALL·E, Stable Diffusion                           |
+| Audio | Text   | Whisper (speech-to-text)                           |
+| Text  | Code   | GitHub Copilot                                     |
+| Text  | Text   | BERT (understanding tasks), GPT (generation tasks) |
+
+---
+
+## Transformer Architecture — Layer by Layer
+
+A Transformer has two stacks — an **Encoder** that understands the input, and a **Decoder** that generates the output. Each stack contains multiple identical layers. The original paper used **6 encoder layers and 6 decoder layers**.
+
+![Working of Encoder Decoder](Working_of_Encoder_Decoder.jpeg)
+
+![Transformers](transformers.jpeg)
+
+```mermaid
+flowchart TB
+    INPUT["Input: 'I love football'"] --> PE["Word Embeddings + Positional Encoding"]
+    PE --> E1["Encoder Layer 1 — basic word patterns, punctuation, syntax"]
+    E1 --> E2["Encoder Layer 2 — phrase structure"]
+    E2 --> E3["Encoder Layer 3 — grammatical roles (subject, verb, object)"]
+    E3 --> E4["Encoder Layer 4 — relationships between words"]
+    E4 --> E5["Encoder Layer 5 — full sentence meaning"]
+    E5 --> E6["Encoder Layer 6 — abstract intent, tone, world knowledge"]
+    E6 --> DEC["Decoder Stack × 6 — generates output one word at a time"]
+    DEC --> OUT["Output: 'Ich liebe Fußball'"]
+```
+
+Think of each layer as a progressively smarter analyst reading the same document. The first analyst spots individual words. By the sixth, they understand the full meaning, tone, and intent.
+
+| Layer depth             | What the model is learning                                  |
+| ----------------------- | ----------------------------------------------------------- |
+| **Lower layers (1–2)**  | Spelling, common word patterns, basic syntax                |
+| **Middle layers (3–4)** | How words relate — phrases, grammar roles                   |
+| **Higher layers (5–6)** | Abstract meaning — sentiment, intent, real-world references |
+
+---
+
+## Inside One Encoder Block
+
+Every single encoder layer — whether layer 1 or layer 6 — has the same two sub-layers:
+
+1. **Multi-Head Self-Attention** — every word looks at every other word and builds context from the whole sentence
+2. **Feed-Forward Network** — each word's representation is refined independently
+
+Between each sub-layer there is an **Add & Norm** step: the layer's input is added back to its output (residual connection) and then normalised. This keeps training stable even across many stacked layers.
+
+![Encoder Block](encoder_block.png)
+
+```mermaid
+flowchart TB
+    IN["Word representations\n(from previous layer or initial embedding)"]
+    IN --> MHA["① Multi-Head Self-Attention\n— words exchange information with each other\n— 'study' learns it is related to 'man', not just itself"]
+    MHA --> AN1["Add & Norm\n(original input + attention output, then normalised)"]
+    AN1 --> FFN["② Feed-Forward Network\n— each word's vector is refined independently\n— no word-to-word interaction here, just depth"]
+    FFN --> AN2["Add & Norm\n(attention output + FFN output, then normalised)"]
+    AN2 --> OUT["Richer word representations → passed to next encoder layer"]
+```
+
+The **FFN** is a simple two-layer neural network applied to each word separately — all word interaction already happened in self-attention. The FFN just gives the model extra capacity to transform each word's updated representation.
+
+---
+
+## Self-Attention — A Worked Example with Real Numbers
+
+Let's walk through the entire self-attention calculation step by step using the sentence: **"please study man"**
+
+Each word starts as a 2-dimensional embedding (we use 2D to keep the maths small and readable):
+
+```
+  Word       Embedding
+  ─────────────────────
+  please     [1, 0]
+  study      [0, 2]
+  man        [1, 1]
+```
+
+We also have three 2×2 weight matrices — $W_Q$, $W_K$, $W_V$ — which are **learned during training**:
+
+$$W_Q = \begin{bmatrix}1 & 0 \\ 0 & 1\end{bmatrix} \qquad W_K = \begin{bmatrix}1 & 1 \\ 0 & 1\end{bmatrix} \qquad W_V = \begin{bmatrix}1 & 0 \\ 1 & 1\end{bmatrix}$$
+
+---
+
+### Step 1 — Create Q, K, V for Each Word
+
+Multiply each word's embedding by each weight matrix. This gives every word three different vectors:
+
+```
+  Word      Query (Q)    Key (K)      Value (V)
+  ───────────────────────────────────────────────
+  please    [1, 0]       [1, 1]       [1, 0]
+  study     [0, 2]       [0, 2]       [2, 2]
+  man       [1, 1]       [1, 2]       [2, 1]
+```
+
+Think of each word now having three "faces":
+
+| Vector      | Plain English                                         |
+| ----------- | ----------------------------------------------------- |
+| **Query Q** | "What am I searching for in this sentence?"           |
+| **Key K**   | "What kind of information do I hold?"                 |
+| **Value V** | "The actual content I will share if someone needs me" |
+
+---
+
+### Step 2 — Raw Attention Scores (Q · Kᵀ)
+
+For every word, compute the dot product of its **Query** with every word's **Key**. The score tells us: how relevant is word $j$ to word $i$?
+
+$$\text{score}(i, j) = Q_i \cdot K_j$$
+
+```
+  Score matrix:
+              please   study   man
+  please  →  [  1   ]  [  0  ]  [  1  ]     ← Q_please · each K
+  study   →  [  2   ]  [  4  ]  [  4  ]     ← Q_study  · each K
+  man     →  [  2   ]  [  2  ]  [  3  ]     ← Q_man    · each K
+```
+
+Row "study" scores [2, 4, 4] — meaning from study's point of view, "study" itself and "man" are equally highly relevant (both score 4), while "please" is less so (score 2).
+
+---
+
+### Step 3 — Softmax → Attention Weights
+
+Raw scores are just numbers. **Softmax** converts each row into percentages that sum to 1 — so we can interpret them as "how much attention to pay to each word":
+
+$$\alpha_{ij} = \text{softmax}(\text{score}_{ij}) = \frac{e^{\text{score}_{ij}}}{\sum_k e^{\text{score}_{ik}}}$$
+
+```
+  Row "please"  [1, 0, 1]  →  [0.42, 0.16, 0.42]
+  Row "study"   [2, 4, 4]  →  [0.06, 0.47, 0.47]
+  Row "man"     [2, 2, 3]  →  [0.24, 0.24, 0.52]
+```
+
+Reading row "study": the model pays **6%** attention to "please", **47%** to itself, **47%** to "man". Study cares mostly about itself and "man".
+
+---
+
+### Step 4 — Weighted Sum of Values → Context Vector
+
+Each word's new representation = blend all Value vectors weighted by the attention percentages:
+
+$$\text{context}(\text{study}) = \sum_j \alpha_j \cdot V_j$$
+
+```
+  context(study) =  0.06 × [1, 0]   ← please's value
+                  + 0.47 × [2, 2]   ← study's value
+                  + 0.47 × [2, 1]   ← man's value
+
+                 =  [0.06, 0.00]
+                  + [0.94, 0.94]
+                  + [0.94, 0.47]
+                  ─────────────────
+                 =  [1.94, 1.41]
+```
+
+"study" started as `[0, 2]`. After self-attention it becomes `[1.94, 1.41]` — a completely new vector shaped by the whole sentence, not just the word itself.
+
+```mermaid
+flowchart LR
+    subgraph IN["Input — simple embeddings"]
+        P["please\n[1, 0]"]
+        S["study\n[0, 2]"]
+        M["man\n[1, 1]"]
+    end
+    IN --> SA["Self-Attention\n(4 steps above)"]
+    subgraph OUT["Output — contextual embeddings"]
+        P2["please'\n[enriched]"]
+        S2["study'\n[1.94, 1.41] ✓"]
+        M2["man'\n[enriched]"]
+    end
+    SA --> OUT
+    style S fill:#cce5ff,stroke:#0066cc,color:#000000
+    style S2 fill:#ccffcc,stroke:#009900,color:#000000
+```
+
+Every word goes in as a simple vector and comes out as a **context-aware vector** shaped by what it found in the whole sentence.
+
+> **Scaling note:** In practice, the raw scores are divided by $\sqrt{d_k}$ (square root of the key vector dimension) before softmax. Here $d_k = 2$, so scores would be divided by $\sqrt{2} \approx 1.41$. This prevents very large numbers from making the softmax too sharp and killing the gradients during training.
+
+---
+
+### Summarising the 4 Steps
+
+```mermaid
+flowchart LR
+    E["Word embedding"] --> Q["Step 1\nCreate Q, K, V"]
+    Q --> S["Step 2\nRaw scores\nQ · Kᵀ"]
+    S --> SM["Step 3\nSoftmax\n→ attention weights α"]
+    SM --> C["Step 4\nWeighted sum\nα · V = context vector"]
+    C --> OUT["Contextual\nembedding"]
+```
+
+---
+
+## Multi-Head Attention — Eight Perspectives at Once
+
+One pass of self-attention gives you one perspective on the sentence. But a sentence carries multiple types of meaning simultaneously:
+
+```
+  "The animal didn't cross the street because it was too tired"
+
+  Perspective 1 — Coreference:  "it" refers to "animal", not "street"
+  Perspective 2 — Grammar:      "was tired" modifies the subject "it"
+  Perspective 3 — Causality:    "tired" is the reason for "didn't cross"
+  Perspective 4 — World knowledge: animals get tired, streets do not
+```
+
+**Multi-head attention** runs self-attention **h times in parallel**, each time with its own $W_Q, W_K, W_V$ matrices. Each "head" independently learns to focus on a different type of relationship.
+
+```
+  Embedding size = 512
+  Number of heads = 8
+  Each head works on: 512 ÷ 8 = 64 dimensions
+
+  Head 1  → grammatical subject-verb links
+  Head 2  → pronoun coreference ("it" → "animal")
+  Head 3  → semantic similarity between words
+  Head 4  → positional adjacency (nearby words)
+  Head 5–8 → whatever relationships the training data taught each head
+```
+
+```mermaid
+flowchart TB
+    IN["512-dim word embedding"] --> SP["Split into 8 chunks of 64 dimensions each"]
+    SP --> H1["Head 1\ngrammar"]
+    SP --> H2["Head 2\ncoreference"]
+    SP --> H3["Head 3\nsemantics"]
+    SP --> H4["Heads 4–8\n..."]
+    H1 --> CC["Concatenate all 8 outputs → 512-dim again"]
+    H2 --> CC
+    H3 --> CC
+    H4 --> CC
+    CC --> WO["Linear projection × Wᴼ\n(blend all heads into one representation)"]
+    WO --> OUT["Final output: each word understood\nfrom 8 different angles at once"]
+```
+
+$$\text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h) \cdot W^O$$
+
+Think of it like sending the same document to 8 specialist reviewers simultaneously — a grammarian, a fact-checker, a tone analyst, a coreference expert... — and combining all their notes into one final assessment. That is richer than anything one expert could produce alone.
+
+---
+
+## Further Reading
+
+> Reference material: [transformer_and_attention_mechanism.pdf](transformer_and_attention_mechanism.pdf)
+
+
+
 
 ---
 
