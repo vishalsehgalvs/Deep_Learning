@@ -149,6 +149,15 @@ That's why we move to full ANNs with better activation functions.
 - [x] RNN Encoder-Decoder — context vector and the bottleneck problem (see `Transformer and Attention Mechanism/notes.md`)
 - [x] Attention mechanism — how the decoder focuses on relevant input words (see `Transformer and Attention Mechanism/notes.md`)
 - [x] Transformer architecture — self-attention, multi-head attention, positional encoding (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Self-attention deep dive — Q, K, V worked example with real numbers (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Multi-head attention — 8 heads, 512÷8=64 dims, concatenation and projection (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Encoder internals — multi-head attention, FFN, Add & Norm, residual connections (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Decoder internals — masked self-attention, cross-attention, FFN (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Training vs inference — teacher forcing vs autoregressive generation (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Masked attention — causal masking to prevent data leakage during training (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Cross-attention — how the decoder attends to the encoder output (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Feed-Forward Network — 512→2048→512 expand-compress per word (see `Transformer and Attention Mechanism/notes.md`)
+- [x] Positional encoding — sine/cosine patterns explained with analogy (see `Transformer and Attention Mechanism/notes.md`)
 - [ ] BERT deep dive — bidirectional encoding and fine-tuning
 - [ ] GPT architecture — autoregressive text generation
 
@@ -447,4 +456,4 @@ _LSTM training — each epoch takes longer but the model learns richer patterns 
 | `Recurrent_Neural_Network/notes.md`                    | Full RNN theory — RNN, LSTM, GRU, gates, vanishing gradients and more         |
 | `Recurrent_Neural_Network/rnn_revision_notes.md`       | Quick revision cheat sheet for RNN, LSTM, GRU                                 |
 | `Recurrent_Neural_Network/README.md`                   | RNN project overview — pipeline, models, architecture, how to run             |
-| `Transformer and Attention Mechanism/notes.md`         | Seq2Seq, Attention, and Transformer theory — from RNN encoder-decoder to BERT |
+| `Transformer and Attention Mechanism/notes.md`         | Complete Transformer theory — RNN to Transformer, attention mechanism, self-attention worked example, multi-head attention, encoder/decoder architecture, FFN, positional encoding, causal masking, cross-attention, training vs inference (44 sections, 4 parts) |
