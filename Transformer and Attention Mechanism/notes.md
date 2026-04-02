@@ -6,19 +6,61 @@
 
 ## Table of Contents
 
+### Part 1 — The Story So Far (Historical Progression)
+
 1. [Quick Recap — ANN, CNN, RNN and Where They Fall Short](#1-quick-recap)
 2. [The Seq2Seq Problem — Why We Need Something New](#2-the-seq2seq-problem)
 3. [Generation 1 — RNN Encoder-Decoder](#3-generation-1--rnn-encoder-decoder)
 4. [The Bottleneck Problem](#4-the-bottleneck-problem)
 5. [Generation 2 — Attention Mechanism](#5-generation-2--attention-mechanism)
 6. [Generation 3 — The Transformer](#6-generation-3--the-transformer)
+
+### Part 2 — Core Transformer Mechanics
+
 7. [Self-Attention — The Heart of the Transformer](#7-self-attention--the-heart-of-the-transformer)
 8. [Multi-Head Attention](#8-multi-head-attention)
 9. [Positional Encoding](#9-positional-encoding)
 10. [Full Transformer Architecture](#10-full-transformer-architecture)
 11. [Why Transformers Beat RNNs](#11-why-transformers-beat-rnns)
 12. [Quick Reference](#12-quick-reference)
-13. [Coming Next](#coming-next)
+
+### Part 3 — Encoder and Decoder in Depth
+
+13. [Why Old Models Were Not Enough](#why-old-models-were-not-enough)
+14. [3 Types of Models (Based on Input/Output)](#3-types-of-models-based-on-inputoutput)
+15. [Encoder–Decoder Architecture](#encoderdecoder-architecture)
+16. [The Encoder](#the-encoder)
+17. [The Decoder](#the-decoder)
+18. [Problems with the Basic Encoder–Decoder](#problems-with-the-basic-encoderdecoder)
+19. [Attention Mechanism — The Fix](#attention-mechanism--the-fix)
+20. [How Attention Weights Are Calculated](#how-attention-weights-are-calculated)
+21. [A Real-World Analogy for Attention](#a-real-world-analogy-for-attention)
+22. [Types of Attention](#types-of-attention)
+23. [Self-Attention — Words Talking to Each Other](#self-attention--words-talking-to-each-other)
+24. [Multi-Head Attention — Several Perspectives at Once](#multi-head-attention--several-perspectives-at-once)
+25. [The Transformer — Putting It All Together](#the-transformer--putting-it-all-together)
+26. [Positional Encoding — Giving Words a Sense of Order](#positional-encoding--giving-words-a-sense-of-order)
+27. [Residual Connections and Layer Normalisation](#residual-connections-and-layer-normalisation)
+28. [Why Attention + RNN Still Had Problems](#why-attention--rnn-still-had-problems)
+29. [How the Transformer Removed the Last Bottleneck](#how-the-transformer-removed-the-last-bottleneck)
+30. [What Can a Transformer Do?](#what-can-a-transformer-do)
+
+### Part 4 — Deep Dives
+
+31. [Transformer Architecture — Layer by Layer](#transformer-architecture--layer-by-layer)
+32. [Inside One Encoder Block](#inside-one-encoder-block)
+33. [Self-Attention — A Worked Example with Real Numbers](#self-attention--a-worked-example-with-real-numbers)
+34. [Multi-Head Attention — Eight Perspectives at Once](#multi-head-attention--eight-perspectives-at-once)
+35. [After Multi-Head Attention — Concatenate, Project, Normalise](#after-multi-head-attention--concatenate-project-normalise)
+36. [Positional Encoding — Why Parallel Processing Needs It](#positional-encoding--why-parallel-processing-needs-it)
+37. [Feed-Forward Network (FFN) — Deepening Each Word's Understanding](#feed-forward-network-ffn--deepening-each-words-understanding)
+38. [Multiple Encoder Layers — Building Up Understanding Gradually](#multiple-encoder-layers--building-up-understanding-gradually)
+39. [The Decoder Stack — Generating the Output](#the-decoder-stack--generating-the-output)
+40. [Training vs Inference — Two Very Different Modes](#training-vs-inference--two-very-different-modes)
+41. [Masked Multi-Head Attention — Stopping the Decoder from Cheating](#masked-multi-head-attention--stopping-the-decoder-from-cheating)
+42. [Cross-Attention — The Bridge Between Encoder and Decoder](#cross-attention--the-bridge-between-encoder-and-decoder)
+43. [Reference Material](#reference-material)
+44. [Coming Next](#coming-next)
 
 ---
 
@@ -1339,19 +1381,304 @@ Think of it like sending the same document to 8 specialist reviewers simultaneou
 
 ---
 
-## Further Reading
+## After Multi-Head Attention — Concatenate, Project, Normalise
 
-> Reference material: [transformer_and_attention_mechanism.pdf](transformer_and_attention_mechanism.pdf)
+Before the output of multi-head attention moves on to the Feed-Forward Network, three quick but important steps happen:
 
+### Step 1 — Concatenate the Heads
 
+Each of the 8 attention heads produced its own 64-dimensional output. We simply stack them side by side to get one big vector again:
 
+```
+  Head 1 output   [64 values]
+  Head 2 output   [64 values]
+       ...
+  Head 8 output   [64 values]
+                  ─────────────
+  Concatenated    [512 values]   ← back to original embedding size
+```
+
+### Step 2 — Linear Projection (Output Weights W⁰)
+
+The concatenated 512-dim vector is multiplied by a learned weight matrix $W^O$. This blends all the heads' perspectives into one coherent representation — rather than leaving them as 8 separate opinions sitting next to each other.
+
+$$\text{MultiHead output} = \text{Concat}(\text{head}_1, \ldots, \text{head}_8) \cdot W^O$$
+
+Think of it like 8 specialist reviewers handing in separate reports. The linear projection is the editor who reads all 8 and writes one final, integrated summary.
+
+### Step 3 — Add & Norm (Residual Connection + Layer Normalisation)
+
+$$z = \text{LayerNorm}(\text{output} + \text{original input})$$
+
+Two things happen here in one formula:
+
+**Residual connection (the `+ original input` part):**
+The word's original representation before attention is **added back** to the attention output. This means the model always keeps hold of what the word was before — it never fully overwrites it.
+
+> Why? Because the Transformer processes all words **in parallel**. There is no step-by-step flow like an RNN to carry information forward. Without residuals, information could be lost or distorted through many layers. Adding the original input back acts like a safety rope — the model can always "fall back" to what it started with.
+
+**Layer normalisation (the `LayerNorm(...)` part):**
+After adding, the values are normalised so they don't grow too large or too small. This keeps training stable and fast.
+
+```mermaid
+flowchart TB
+    X["Word input x\n(before attention)"]
+    X --> MHA["Multi-Head Self-Attention\n→ output"]
+    MHA --> ADD["➕ Add residual\noutput + x"]
+    X --> ADD
+    ADD --> NORM["LayerNorm\nstabilise values"]
+    NORM --> FFN["→ Feed-Forward Network"]
+    style ADD fill:#fff3cc,stroke:#cc8800,color:#000000
+    style NORM fill:#cce5ff,stroke:#0066cc,color:#000000
+```
 
 ---
 
-## Coming Next
+## Positional Encoding — Why Parallel Processing Needs It
 
-- [ ] BERT deep dive — bidirectional encoding, masked language modelling, fine-tuning
-- [ ] GPT architecture — how autoregressive generation works
-- [ ] Transformer code — building a simple Transformer from scratch
-- [ ] Positional encoding — visualising the sine/cosine patterns
-- [ ] Scaled dot-product attention — implementing it with NumPy
+The Transformer reads **all words at once** in parallel. That's fast — but it means the model has no built-in sense of order. The words "dog bites man" and "man bites dog" would look identical without extra information.
+
+**Positional encoding** solves this by adding a unique position signal to each word's embedding _before_ it enters any layer. Every position gets a distinct pattern of sine and cosine values at different frequencies:
+
+$$PE_{(pos,\ 2i)} = \sin\!\left(\frac{pos}{10000^{2i/d_{model}}}\right) \qquad PE_{(pos,\ 2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d_{model}}}\right)$$
+
+```
+  Word         Embedding      + Positional encoding   = What enters the model
+  ──────────────────────────────────────────────────────────────────────────
+  "I"          [0.2, 0.5, ...]  + [sin(1/...), cos(1/...)]  = unique vector at pos 1
+  "love"       [0.8, 0.1, ...]  + [sin(2/...), cos(2/...)]  = unique vector at pos 2
+  "football"   [0.4, 0.9, ...]  + [sin(3/...), cos(3/...)]  = unique vector at pos 3
+```
+
+The key insight: using periodic waves means the model can infer **relative distance** between words, not just their absolute positions. It can figure out "these two words are 3 positions apart" just from the pattern — even for sentences it has never seen before.
+
+> **Analogy:** Think of seats in a cinema. The movie (word meaning) is the same, but the seat number (positional encoding) tells you exactly where each person is sitting. Same film, different seats — different coordinates.
+
+---
+
+## Feed-Forward Network (FFN) — Deepening Each Word's Understanding
+
+After self-attention, every word has a new context-aware representation. The **Feed-Forward Network** then processes each word _independently_ to extract deeper patterns and enrich its meaning further.
+
+It is a small two-layer neural network applied identically to every word:
+
+$$\text{FFN}(x) = \text{ReLU}(x \cdot W_1 + b_1) \cdot W_2 + b_2$$
+
+```
+  Input embedding   (512 dimensions)
+          ↓
+  Linear layer      (expand to 2048 dimensions)   ← more capacity
+          ↓
+  ReLU activation   (non-linearity — lets model learn complex patterns)
+          ↓
+  Linear layer      (compress back to 512 dimensions)
+          ↓
+  Output embedding  (512 dimensions — same size, richer meaning)
+```
+
+```mermaid
+flowchart LR
+    IN["Word vector\n512-dim\n(after attention)"] --> L1["Linear: 512 → 2048\n(expand — more room to learn)"]
+    L1 --> ACT["ReLU activation\n(adds non-linearity)"]
+    ACT --> L2["Linear: 2048 → 512\n(compress back)"]
+    L2 --> OUT["Word vector\n512-dim\n(deeper representation)"]
+```
+
+**Key difference from attention:** There is zero communication between words here. Attention is where words _talk to each other_. FFN is where each word _thinks for itself_ — same network weights, applied separately to every token.
+
+> **Analogy:** Attention is the team meeting where everyone exchanges ideas. The FFN is the individual work time afterwards — each person privately processes what they learned and develops it further.
+
+---
+
+## Multiple Encoder Layers — Building Up Understanding Gradually
+
+A single encoder layer gives you one round of context + refinement. The Transformer stacks **6 of these layers** (in the original paper) and the understanding deepens at every level:
+
+```mermaid
+flowchart TB
+    EMB["Input: word embeddings + positional encoding"]
+    EMB --> L1["Encoder Layer 1\n— basic word patterns\n— punctuation, common collocations"]
+    L1 --> L2["Encoder Layer 2\n— short-range grammar\n— subject, verb, object roles"]
+    L2 --> L3["Encoder Layer 3\n— phrase structure\n— 'New York' = one concept"]
+    L3 --> L4["Encoder Layer 4\n— long-range dependencies\n— 'it' refers to 'animal' not 'street'"]
+    L4 --> L5["Encoder Layer 5\n— semantic meaning\n— tone, sentiment, intent"]
+    L5 --> L6["Encoder Layer 6\n— abstract & world knowledge\n— 'bank' = financial here, not riverbank"]
+    L6 --> OUT["Rich contextual representations → passed to Decoder"]
+```
+
+| Layer | What it learns                                               |
+| ----- | ------------------------------------------------------------ |
+| 1–2   | Basic syntax, spelling patterns, adjacent-word relationships |
+| 3–4   | Phrase boundaries, grammatical roles, medium-range links     |
+| 5–6   | Abstract meaning, real-world knowledge, full sentence intent |
+
+Just like a deep ANN learns more abstract features in deeper layers (edges → shapes → faces in a CNN), a Transformer's encoder learns more abstract language features layer by layer.
+
+---
+
+## The Decoder Stack — Generating the Output
+
+The decoder's job is to produce the output sequence one token at a time. It has **three sub-layers** per block (vs. two in the encoder):
+
+```mermaid
+flowchart TB
+    subgraph DEC["Decoder Block (repeated × 6)"]
+        OT["Output tokens so far\n+ positional encoding"]
+        OT --> MMHA["① Masked Multi-Head\nSelf-Attention\n— output words attend to each other\n— future words are hidden"]
+        MMHA --> AN1["Add & Norm"]
+        AN1 --> CA["② Cross-Attention\n(Encoder-Decoder Attention)\n— Q from decoder\n— K and V from encoder output"]
+        ENC["Encoder output →"] --> CA
+        CA --> AN2["Add & Norm"]
+        AN2 --> FFN["③ Feed-Forward Network\n— same as encoder FFN"]
+        FFN --> AN3["Add & Norm"]
+        AN3 --> NEXT["→ Next decoder layer\nor Linear + Softmax → output word"]
+    end
+```
+
+| Sub-layer                 | Purpose                                                                 |
+| ------------------------- | ----------------------------------------------------------------------- |
+| **Masked Self-Attention** | Output words understand each other — but cannot peek at future words    |
+| **Cross-Attention**       | Each output word looks at the encoder's full understanding of the input |
+| **Feed-Forward**          | Deepen each output word's representation independently                  |
+
+---
+
+## Training vs Inference — Two Very Different Modes
+
+This is one of the most important and often-overlooked aspects of how Transformers work. The model behaves **differently** during training vs. when you actually use it.
+
+### Training — Fast, Parallel, Non-Autoregressive
+
+During training, the model sees the **entire correct output sentence at once**. All output words are fed in parallel — this is called **teacher forcing**.
+
+```
+  Target (correct translation):  "Ich liebe Fußball"
+
+  Training input to decoder:     [<start>] [Ich]   [liebe]
+  Training target from decoder:  [Ich]     [liebe] [Fußball]
+
+  All three predictions happen simultaneously — one forward pass.
+  Very fast. Uses the full power of the GPU.
+```
+
+**Problem without masking:** If all words are fed in parallel, word 3 ("Fußball") could see its own answer while predicting it. That is **data leakage** — the model would learn to cheat, not to generate. It would overfit badly and fail completely at inference time.
+
+### Inference — Slow, Sequential, Autoregressive
+
+At inference (when you actually use the model), there is no correct answer to feed in. The model must generate word-by-word, using its own previous outputs as input:
+
+```
+  Step 1:  [<start>]              → predict "Ich"
+  Step 2:  [<start>] [Ich]        → predict "liebe"
+  Step 3:  [<start>] [Ich] [liebe] → predict "Fußball"
+  Step 4:  → predict "<end>"       → stop
+```
+
+This is **autoregressive** — each step depends on all previous steps. It is slower, but there is no leakage problem because the future simply doesn't exist yet.
+
+```mermaid
+flowchart LR
+    subgraph TRAIN["Training — Non-Autoregressive"]
+        T1["[start] Ich liebe — all fed at once"]
+        T1 --> T2["Predict Ich, liebe, Fußball\nall in one parallel forward pass"]
+        T2 --> T3["⚡ Fast — but mask needed\nto block future words"]
+        style T3 fill:#ccffcc,stroke:#009900,color:#000000
+    end
+    subgraph INFER["Inference — Autoregressive"]
+        I1["[start] → 'Ich'"]
+        I1 --> I2["[start][Ich] → 'liebe'"]
+        I2 --> I3["[start][Ich][liebe] → 'Fußball'"]
+        I3 --> I4["→ end"]
+        style I4 fill:#cce5ff,stroke:#0066cc,color:#000000
+    end
+```
+
+---
+
+## Masked Multi-Head Attention — Stopping the Decoder from Cheating
+
+The decoder uses self-attention just like the encoder — every output word can look at every other output word. But during training this creates a **data leakage problem**.
+
+> Imagine you are a student taking an exam. You write your answer to question 3, but you can already see the model answer for question 3 right next to it. You would just copy it — no learning happens.
+
+The fix is **masking**: before applying softmax to the attention scores, all future positions are set to $-\infty$:
+
+$$\text{score}(i, j) = -\infty \quad \text{if } j > i$$
+
+After softmax, $-\infty$ becomes 0 — those positions contribute nothing to the context vector.
+
+```
+  Generating word 2 ("liebe"):
+
+  Attention scores for word 2:
+                word1    word2    word3
+                [Ich]  [liebe]  [Fußball]
+  word2 sees:   [2.1]   [1.8]    [-∞]      ← Fußball is masked
+
+  After softmax:
+                [0.57]  [0.43]   [0.00]    ← 0% attention to future word
+
+  Result: "liebe" only draws context from past and present — never future.
+```
+
+```mermaid
+flowchart LR
+    subgraph MASK["Masked Attention — what word 2 can see"]
+        W1["✅ word 1 (past)"]
+        W2["✅ word 2 (itself)"]
+        W3["❌ word 3 (future — masked)"]
+        W4["❌ word 4 (future — masked)"]
+    end
+    W1 --> CTX["Context for word 2"]
+    W2 --> CTX
+    W3 -. "score = −∞\n→ weight = 0" .-> CTX
+    W4 -. "score = −∞\n→ weight = 0" .-> CTX
+    style W3 fill:#ffcccc,stroke:#cc0000,color:#000000
+    style W4 fill:#ffcccc,stroke:#cc0000,color:#000000
+    style CTX fill:#ccffcc,stroke:#009900,color:#000000
+```
+
+This is called **causal masking** (or autoregressive masking). It makes training fast (parallel) while keeping it honest (no leakage).
+
+---
+
+## Cross-Attention — The Bridge Between Encoder and Decoder
+
+After masked self-attention, the decoder runs a second attention layer called **cross-attention** (also called encoder-decoder attention). This is where the decoder finally looks at the encoder's output — the full understanding of the input sentence.
+
+The key difference from self-attention: **Q, K, V come from different sources**.
+
+```
+  Self-Attention:    Q, K, V all come from the same sequence
+  Cross-Attention:   Q comes from the decoder's current state
+                     K and V come from the encoder's output
+```
+
+| Vector      | Where it comes from              | What it means                                 |
+| ----------- | -------------------------------- | --------------------------------------------- |
+| **Query Q** | Decoder's current output word    | "What input information do I need right now?" |
+| **Key K**   | Encoder output (all input words) | "What does each input word contain?"          |
+| **Value V** | Encoder output (all input words) | "The actual input content to borrow from"     |
+
+```mermaid
+flowchart TB
+    ENC["Encoder Output\n(full understanding of 'I love football')"]
+    DEC_STATE["Decoder state\n(currently generating 'liebe')"]
+    ENC -->|"K and V — what the input contains"| CA["Cross-Attention"]
+    DEC_STATE -->|"Q — what the decoder is looking for"| CA
+    CA --> OUT["Context: decoder now knows\n'liebe' should focus on 'love'\n(high attention score to 'love' in encoder output)"]
+    style CA fill:#fff3cc,stroke:#cc8800,color:#000000
+    style OUT fill:#ccffcc,stroke:#009900,color:#000000
+```
+
+This is what allows translation to work. When generating "liebe", the decoder's query matches the encoder's key for "love" — high attention score — and borrows its value. The decoder is essentially asking the encoder: "which of your words is most relevant to what I am producing right now?"
+
+---
+
+## Reference Material
+
+> [transformer_and_attention_mechanism.pdf](transformer_and_attention_mechanism.pdf) — full paper and diagrams
+
+> [transformer_illusterated.pdf](transformer_illusterated.pdf) — illustrated step-by-step Transformer walkthrough
+
+---
