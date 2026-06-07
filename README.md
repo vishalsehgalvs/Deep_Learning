@@ -17,36 +17,39 @@ This repo is where I'm documenting everything I learn about Deep Learning — in
 ---
 
 ### `Artificial_Neural_Network/`
-| File | What it covers |
-| ---- | -------------- |
-| `notes.md` | ANN theory overview — perceptrons, layers, how a network learns |
-| `nn.md` | Deep dive: how neural networks actually learn — gradient descent and backprop from scratch |
-| `pytorch.md` | PyTorch from scratch — tensors, the 5-step training loop, `nn.Module` |
-| `adam.md` | The Adam optimizer explained from first principles — momentum, adaptive LR, bias correction |
-| `activation_functions.md` | ReLU, sigmoid, tanh and when to use each |
-| `loss_functions.md` | MSE, cross-entropy and what loss actually means |
-| `optimizers.md` | SGD vs Adam vs RMSProp — the tradeoffs |
-| `blackbox_vs_whitebox.md` | Explainability — what we can and can't see inside a neural network |
-| `iris_species_classifier.py` | Code: multi-class classifier trained on the Iris dataset |
-| `plant_water_predictor.py` | Code: binary classifier to predict whether a plant needs water |
+
+| File                         | What it covers                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| `notes.md`                   | ANN theory overview — perceptrons, layers, how a network learns                             |
+| `nn.md`                      | Deep dive: how neural networks actually learn — gradient descent and backprop from scratch  |
+| `pytorch.md`                 | PyTorch from scratch — tensors, the 5-step training loop, `nn.Module`                       |
+| `adam.md`                    | The Adam optimizer explained from first principles — momentum, adaptive LR, bias correction |
+| `activation_functions.md`    | ReLU, sigmoid, tanh and when to use each                                                    |
+| `loss_functions.md`          | MSE, cross-entropy and what loss actually means                                             |
+| `optimizers.md`              | SGD vs Adam vs RMSProp — the tradeoffs                                                      |
+| `blackbox_vs_whitebox.md`    | Explainability — what we can and can't see inside a neural network                          |
+| `iris_species_classifier.py` | Code: multi-class classifier trained on the Iris dataset                                    |
+| `plant_water_predictor.py`   | Code: binary classifier to predict whether a plant needs water                              |
 
 ### `Transformer and Attention Mechanism/`
-| File | What it covers |
-| ---- | -------------- |
-| `notes.md` | Full theory notes — from RNN encoder-decoder to the complete Transformer |
-| `transformer.md` | Deep dive: build a GPT-2 style Transformer from scratch with code |
-| `attention.md` | Deep dive: QKV attention, causal masking, and multi-head attention from scratch |
-| `kv_cache.md` | Deep dive: what the KV cache is, why it exists, and how to implement it |
-| `rope.md` | Deep dive: Rotary Positional Encoding (RoPE) — the maths and code behind modern LLMs |
+
+| File             | What it covers                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `notes.md`       | Full theory notes — from RNN encoder-decoder to the complete Transformer             |
+| `transformer.md` | Deep dive: build a GPT-2 style Transformer from scratch with code                    |
+| `attention.md`   | Deep dive: QKV attention, causal masking, and multi-head attention from scratch      |
+| `kv_cache.md`    | Deep dive: what the KV cache is, why it exists, and how to implement it              |
+| `rope.md`        | Deep dive: Rotary Positional Encoding (RoPE) — the maths and code behind modern LLMs |
 
 ### `Reinforcement_Learning/`
-| File | What it covers |
-| ---- | -------------- |
-| `multi-armed bandits.md` | The explore vs exploit problem — k-armed bandit, epsilon-greedy, UCB |
-| `finite-mdps.md` | Markov Decision Processes — states, actions, rewards, value functions, Bellman equations |
-| `monte-carlo.md` | Model-free learning from complete episodes — first-visit MC, every-visit MC |
-| `temporal-difference.md` | TD(0), SARSA and Q-learning — learning from every single step |
-| `n-step-bootstrapping.md` | The sweet spot between MC and TD — n-step returns and eligibility traces |
+
+| File                      | What it covers                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| `multi-armed bandits.md`  | The explore vs exploit problem — k-armed bandit, epsilon-greedy, UCB                     |
+| `finite-mdps.md`          | Markov Decision Processes — states, actions, rewards, value functions, Bellman equations |
+| `monte-carlo.md`          | Model-free learning from complete episodes — first-visit MC, every-visit MC              |
+| `temporal-difference.md`  | TD(0), SARSA and Q-learning — learning from every single step                            |
+| `n-step-bootstrapping.md` | The sweet spot between MC and TD — n-step returns and eligibility traces                 |
 
 ---
 
