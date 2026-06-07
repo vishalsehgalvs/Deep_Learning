@@ -12,7 +12,7 @@ This repo is where I'm documenting everything I learn about Deep Learning — in
 | `Convolutional_Neural_Network/`        | CNN theory and code — handwritten digit classifier                                     |
 | `Recurrent_Neural_Network/`            | RNN/LSTM theory and code — sentence completion on famous quotes                        |
 | `Transformer and Attention Mechanism/` | Transformer architecture, attention, KV cache, and RoPE — built from scratch with code |
-| `rl/`                                  | Reinforcement Learning notes — from Multi-Armed Bandits to PPO                         |
+| `Reinforcement_Learning/`              | Reinforcement Learning notes — Multi-Armed Bandits, MDPs, Monte Carlo, TD learning      |
 
 ---
 
