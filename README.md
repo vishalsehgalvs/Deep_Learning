@@ -6,13 +6,13 @@ This repo is where I'm documenting everything I learn about Deep Learning — in
 
 ## What's in here
 
-| Folder                                 | What it covers                                                            |
-| -------------------------------------- | ------------------------------------------------------------------------- |
-| `Artificial_Neural_Network/`           | ANN basics and code — binary and multi-class                              |
-| `Convolutional_Neural_Network/`        | CNN theory and code — handwritten digit classifier                        |
-| `Recurrent_Neural_Network/`            | RNN/LSTM theory and code — sentence completion on famous quotes           |
-| `Transformer and Attention Mechanism/` | Seq2Seq, Attention, and Transformer theory — the architecture behind LLMs |
-| `rl/`                                  | Reinforcement Learning notes — from Multi-Armed Bandits to PPO            |
+| Folder                                 | What it covers                                                                         |
+| -------------------------------------- | -------------------------------------------------------------------------------------- |
+| `Artificial_Neural_Network/`           | ANN basics and code — how NNs learn, PyTorch from scratch, the Adam optimizer          |
+| `Convolutional_Neural_Network/`        | CNN theory and code — handwritten digit classifier                                     |
+| `Recurrent_Neural_Network/`            | RNN/LSTM theory and code — sentence completion on famous quotes                        |
+| `Transformer and Attention Mechanism/` | Transformer architecture, attention, KV cache, and RoPE — built from scratch with code |
+| `rl/`                                  | Reinforcement Learning notes — from Multi-Armed Bandits to PPO                         |
 
 ---
 
