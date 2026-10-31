@@ -1,0 +1,122 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generative Deep Learning | Conclusion and Future Directions</title><style>@page { size: A4; margin: 10mm; }
+
+:root {
+  color-scheme: dark;
+  --board: #080a0b;
+  --ink: #f5f2e9;
+  --yellow: #f5d735;
+  --green: #a7f078;
+  --cyan: #52d8dc;
+  --pink: #ff91a9;
+  --muted: #c4c6bf;
+  --rule: rgba(245, 242, 233, .26);
+  --hand: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #111415;
+  color: var(--ink);
+  font: 16px/1.6 var(--hand);
+}
+.board {
+  max-width: 1440px;
+  margin: 24px auto;
+  padding: clamp(24px, 5vw, 72px);
+  overflow: hidden;
+  background-color: var(--board);
+  background-image: radial-gradient(rgba(230, 239, 230, .17) 1px, transparent 1.2px);
+  background-size: 28px 28px;
+  border: 1px solid #252a2b;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+}
+.masthead { max-width: 980px; margin: 0 auto 34px; text-align: center; }
+.eyebrow, .section-number { color: var(--cyan); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  margin: 8px 0 12px;
+  color: var(--yellow);
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.15;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 9px;
+}
+.subtitle { margin: 20px 0; font-size: 19px; }
+.thesis {
+  margin: 0 auto;
+  padding: 12px 18px;
+  border-block: 2px solid var(--green);
+  color: var(--green);
+  font-size: 17px;
+}
+nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 22px; }
+nav a { color: var(--cyan); text-underline-offset: 4px; }
+a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.section { padding: 28px 0 38px; border-top: 1px dashed var(--rule); scroll-margin-top: 16px; }
+.section-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 22px; }
+h2 {
+  margin-bottom: 0;
+  color: var(--yellow);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.25;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+h3 { margin-bottom: 8px; color: var(--green); font-size: 19px; line-height: 1.35; }
+p { margin-bottom: 11px; }
+ul, ol { margin: 7px 0 13px; padding-left: 23px; }
+li { margin: 3px 0; padding-left: 3px; }
+li::marker { color: var(--cyan); }
+strong { color: var(--yellow); }
+em { color: var(--cyan); font-style: normal; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 36px; }
+.note { min-width: 0; padding-left: 16px; border-left: 2px solid var(--green); }
+.note.yellow { border-color: var(--yellow); }
+.note.cyan { border-color: var(--cyan); }
+.note.pink { border-color: var(--pink); }
+.wide { grid-column: 1 / -1; }
+.flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin: 13px 0; }
+.step { flex: 1 1 140px; min-width: 0; padding: 9px 11px; border: 1px solid var(--green); text-align: center; }
+.arrow { align-self: center; color: var(--yellow); font-size: 21px; }
+.equation { margin: 12px 0; padding: 9px 13px; border-left: 3px solid var(--cyan); color: var(--cyan); overflow-wrap: anywhere; }
+.callout { margin: 13px 0; padding: 11px 14px; border: 1px dashed var(--yellow); color: var(--yellow); }
+.small { color: var(--muted); font-size: 14px; }
+.pink-text { color: var(--pink); }
+table { width: 100%; margin: 12px 0; border-collapse: collapse; text-align: left; }
+th, td { padding: 8px 9px; border-bottom: 1px dashed var(--rule); vertical-align: top; }
+th { color: var(--cyan); }
+.checklist { columns: 2; column-gap: 30px; }
+.checklist li { break-inside: avoid; }
+footer { padding-top: 20px; border-top: 1px dashed var(--rule); color: var(--muted); text-align: center; font-size: 13px; }
+@media (max-width: 760px) {
+  .board { margin: 0; padding: 26px 19px; border-radius: 0; }
+  .grid { grid-template-columns: 1fr; gap: 21px; }
+  .wide { grid-column: auto; }
+  .checklist { columns: 1; }
+  .step { flex-basis: 100%; }
+  .arrow { width: 100%; text-align: center; transform: rotate(90deg); }
+}
+@media print {
+  :root { color-scheme: dark; }
+  body { background: var(--board); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .board { max-width: none; margin: 0; padding: 5mm; border: 0; border-radius: 0; box-shadow: none; }
+  nav { display: none; }
+  .section { break-inside: auto; }
+  .note { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+h1{font-size:38px}h2{font-size:27px}.source,.meta{color:var(--muted);font-size:12px}.source{display:block;margin:4px 0 12px}.note{overflow-wrap:anywhere}.note h4{color:var(--cyan);margin:12px 0 5px}a{color:var(--cyan)}.chapter-list{padding:0;list-style:none}.chapter-list li{padding:13px 0;border-bottom:1px dashed var(--rule)}.chapter-list strong{display:block}.meta{margin-top:18px}.diagram{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0}.diagram span{border:1px solid var(--cyan);padding:8px 12px}.diagram b{color:var(--yellow)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--cyan)}
+@media(max-width:760px){h1{font-size:30px}h2{font-size:23px}}
+@media print{body{font-size:11pt;line-height:1.5}.grid{display:block}.note{margin-bottom:20px;break-inside:avoid}h1{font-size:26pt}h2{font-size:19pt}h3{font-size:14pt}.board{padding:5mm}.source,.meta{font-size:8pt}.section{padding:18px 0}.masthead{margin-bottom:20px}pre{font-size:9pt}}
+</style></head><body><main class="board"><header class="masthead"><div class="eyebrow">Generative Deep Learning | Chapter 14</div><h1>Conclusion and Future Directions</h1><p class="thesis">Connect the model families and application trends, while distinguishing the book’s 2023 observations and predictions from established mechanisms and current facts.</p><p class="meta">Original study notes based on David Foster, Second edition, 2023. Book pp. 391-416. Source APIs, services, experiments, and model comparisons reflect the book's publication period. These are explanatory summaries, not verbatim reproductions or a claim that every source detail is retained.</p><nav aria-label="Notes navigation"><a href="index.html">All chapters</a><a href="#topic-1">Timeline: VAE/GAN, transformer, and big-model eras</a><a href="#topic-2">Large language models and text-to-code</a><a href="#topic-3">Text-to-image and other applications</a><a href="#topic-4">Everyday life, work, and education</a><a href="#topic-5">Ethics and challenges</a><a href="#topic-6">Final thoughts: active inference and continued learning</a></nav></header><div class="diagram" aria-label="Chapter workflow"><span>Historical mechanisms</span><b>&rarr;</b><span>Application possibilities</span><b>&rarr;</b><span>Practical constraints</span><b>&rarr;</b><span>Ethical assessment</span><b>&rarr;</b><span>Continued experiments</span></div><section class="section"><h2>Detailed Notes</h2><div class="grid"><article class="note " id="topic-1"><h3>Timeline: VAE/GAN, transformer, and big-model eras</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=419">Source: book pp. 391-395 / PDF p. 419</a><p>The historical sequence organizes several advances: VAEs and GANs made learned image synthesis central; transformers changed sequence modeling and transfer learning; larger models, diffusion, and cross-modal systems broadened capabilities.</p><p>These eras overlap. A newer family does not invalidate older ones, and successful systems often combine representations and objectives. Understand the underlying changes in likelihood, attention, conditioning, scale, and sampling rather than memorizing only release dates.</p></article>
+<article class="note yellow" id="topic-2"><h3>Large language models and text-to-code</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=424">Source: book pp. 396-401 / PDF p. 424</a><p>The chapter surveys the capabilities and limitations visible around publication: continuation, instruction following, in-context tasks, and specialized code assistance. Historical model sizes, services, and benchmarks should be read as context, not a 2026 market assessment.</p><p>Code generation connects language modeling with executable verification. A plausible program may contain incorrect logic, insecure dependencies, or invented APIs. Use tests, static checks, constrained tools, and human review proportional to risk. Product demonstrations do not establish reliable autonomous engineering.</p></article>
+<article class="note cyan" id="topic-3"><h3>Text-to-image and other applications</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=430">Source: book pp. 402-406 / PDF p. 430</a><p>Image generators support controlled edits, composition, and creative workflows; conditioning can include text, structure, and other media. Emerging applications extend to audio, video, 3D, scientific modeling, and interactive environments.</p><p>Separate a system’s expressive range from its consistency, controllability, and rights to use outputs. Fine detail, temporal stability, task constraints, and meaningful evaluation become more important as generators move into workflows. A useful model need not be the largest if a smaller controlled system meets the task.</p></article>
+<article class="note pink" id="topic-4"><h3>Everyday life, work, and education</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=435">Source: book pp. 407-410 / PDF p. 435</a><p>The author discusses possible effects on search, communication, content creation, creative tools, work organization, and personalized learning. These are forecasts and opportunities, not proof that adoption will follow one inevitable path.</p><p>Evaluate human effort saved after verification/editing, changes to required skills, accessibility, and who benefits. Educational tools should support understanding rather than merely deliver polished answers. Human-machine collaboration, workflow design, and feedback determine whether technical capability becomes practical value.</p></article>
+<article class="note " id="topic-5"><h3>Ethics and challenges</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=439">Source: book pp. 411-412 / PDF p. 439</a><p>Important issues include dataset consent and rights, creator attribution, bias, privacy, misleading media, concentration of capability, resource use, and misuse. Technical quality is not a substitute for social and legal judgment.</p><p>Assess potential harms before release, document data/model provenance, protect sensitive inputs, and establish review and accountability. Neither “open” nor “commercial” automatically resolves these questions. Responsible evaluation should consider people absent or underrepresented in the training data.</p></article>
+<article class="note yellow" id="topic-6"><h3>Final thoughts: active inference and continued learning</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=441">Source: book pp. 413-416 / PDF p. 441</a><p>The author connects generative world models with perception/action loops and the free-energy/active-inference viewpoint: an agent’s model of its environment interacts with its actions and observations. This is a conceptual perspective, not a demonstrated proof that a particular generator achieves general intelligence.</p><p>Consolidate learning by reproducing a small experiment, changing one design choice, and measuring the effect. Keep distinctions among observation, hypothesis, prediction, and evidence clear. Full references and original diagrams remain in the book for deeper study.</p></article></div></section><section class="section"><h2>Revision Check</h2><ol><li>Which family trade-offs remain relevant despite newer models?</li><li>Which statements here are historical predictions?</li><li>How would you measure actual workflow value?</li><li>What provenance and consent checks does your project need?</li></ol><div class="callout">Learn durable mechanisms and test claims. Generative capability creates possibilities, but reliability, usefulness, and responsible deployment must be established separately.</div></section><footer>Source links refer to the supplied PDF. Every contents-page topic is mapped in coverage.md. Consult the book for complete implementations, figures, exercises, citations, and experiment evidence.</footer></main></body></html>
