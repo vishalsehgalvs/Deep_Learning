@@ -1,0 +1,122 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generative Deep Learning | Generative Modeling</title><style>@page { size: A4; margin: 10mm; }
+
+:root {
+  color-scheme: dark;
+  --board: #080a0b;
+  --ink: #f5f2e9;
+  --yellow: #f5d735;
+  --green: #a7f078;
+  --cyan: #52d8dc;
+  --pink: #ff91a9;
+  --muted: #c4c6bf;
+  --rule: rgba(245, 242, 233, .26);
+  --hand: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #111415;
+  color: var(--ink);
+  font: 16px/1.6 var(--hand);
+}
+.board {
+  max-width: 1440px;
+  margin: 24px auto;
+  padding: clamp(24px, 5vw, 72px);
+  overflow: hidden;
+  background-color: var(--board);
+  background-image: radial-gradient(rgba(230, 239, 230, .17) 1px, transparent 1.2px);
+  background-size: 28px 28px;
+  border: 1px solid #252a2b;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+}
+.masthead { max-width: 980px; margin: 0 auto 34px; text-align: center; }
+.eyebrow, .section-number { color: var(--cyan); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  margin: 8px 0 12px;
+  color: var(--yellow);
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.15;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 9px;
+}
+.subtitle { margin: 20px 0; font-size: 19px; }
+.thesis {
+  margin: 0 auto;
+  padding: 12px 18px;
+  border-block: 2px solid var(--green);
+  color: var(--green);
+  font-size: 17px;
+}
+nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 22px; }
+nav a { color: var(--cyan); text-underline-offset: 4px; }
+a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.section { padding: 28px 0 38px; border-top: 1px dashed var(--rule); scroll-margin-top: 16px; }
+.section-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 22px; }
+h2 {
+  margin-bottom: 0;
+  color: var(--yellow);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.25;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+h3 { margin-bottom: 8px; color: var(--green); font-size: 19px; line-height: 1.35; }
+p { margin-bottom: 11px; }
+ul, ol { margin: 7px 0 13px; padding-left: 23px; }
+li { margin: 3px 0; padding-left: 3px; }
+li::marker { color: var(--cyan); }
+strong { color: var(--yellow); }
+em { color: var(--cyan); font-style: normal; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 36px; }
+.note { min-width: 0; padding-left: 16px; border-left: 2px solid var(--green); }
+.note.yellow { border-color: var(--yellow); }
+.note.cyan { border-color: var(--cyan); }
+.note.pink { border-color: var(--pink); }
+.wide { grid-column: 1 / -1; }
+.flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin: 13px 0; }
+.step { flex: 1 1 140px; min-width: 0; padding: 9px 11px; border: 1px solid var(--green); text-align: center; }
+.arrow { align-self: center; color: var(--yellow); font-size: 21px; }
+.equation { margin: 12px 0; padding: 9px 13px; border-left: 3px solid var(--cyan); color: var(--cyan); overflow-wrap: anywhere; }
+.callout { margin: 13px 0; padding: 11px 14px; border: 1px dashed var(--yellow); color: var(--yellow); }
+.small { color: var(--muted); font-size: 14px; }
+.pink-text { color: var(--pink); }
+table { width: 100%; margin: 12px 0; border-collapse: collapse; text-align: left; }
+th, td { padding: 8px 9px; border-bottom: 1px dashed var(--rule); vertical-align: top; }
+th { color: var(--cyan); }
+.checklist { columns: 2; column-gap: 30px; }
+.checklist li { break-inside: avoid; }
+footer { padding-top: 20px; border-top: 1px dashed var(--rule); color: var(--muted); text-align: center; font-size: 13px; }
+@media (max-width: 760px) {
+  .board { margin: 0; padding: 26px 19px; border-radius: 0; }
+  .grid { grid-template-columns: 1fr; gap: 21px; }
+  .wide { grid-column: auto; }
+  .checklist { columns: 1; }
+  .step { flex-basis: 100%; }
+  .arrow { width: 100%; text-align: center; transform: rotate(90deg); }
+}
+@media print {
+  :root { color-scheme: dark; }
+  body { background: var(--board); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .board { max-width: none; margin: 0; padding: 5mm; border: 0; border-radius: 0; box-shadow: none; }
+  nav { display: none; }
+  .section { break-inside: auto; }
+  .note { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+h1{font-size:38px}h2{font-size:27px}.source,.meta{color:var(--muted);font-size:12px}.source{display:block;margin:4px 0 12px}.note{overflow-wrap:anywhere}.note h4{color:var(--cyan);margin:12px 0 5px}a{color:var(--cyan)}.chapter-list{padding:0;list-style:none}.chapter-list li{padding:13px 0;border-bottom:1px dashed var(--rule)}.chapter-list strong{display:block}.meta{margin-top:18px}.diagram{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0}.diagram span{border:1px solid var(--cyan);padding:8px 12px}.diagram b{color:var(--yellow)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--cyan)}
+@media(max-width:760px){h1{font-size:30px}h2{font-size:23px}}
+@media print{body{font-size:11pt;line-height:1.5}.grid{display:block}.note{margin-bottom:20px;break-inside:avoid}h1{font-size:26pt}h2{font-size:19pt}h3{font-size:14pt}.board{padding:5mm}.source,.meta{font-size:8pt}.section{padding:18px 0}.masthead{margin-bottom:20px}pre{font-size:9pt}}
+</style></head><body><main class="board"><header class="masthead"><div class="eyebrow">Generative Deep Learning | Chapter 1</div><h1>Generative Modeling</h1><p class="thesis">Learn a useful approximation to a data-generating distribution, then sample new observations. Generation needs both realistic individual samples and coverage of the distribution, not memorization alone.</p><p class="meta">Original study notes based on David Foster, Second edition, 2023. Book pp. 3-22. Source APIs, services, experiments, and model comparisons reflect the book's publication period. These are explanatory summaries, not verbatim reproductions or a claim that every source detail is retained.</p><nav aria-label="Notes navigation"><a href="index.html">All chapters</a><a href="#topic-1">Generative versus discriminative modeling</a><a href="#topic-2">The first generative model and its assumptions</a><a href="#topic-3">Representation learning and latent spaces</a><a href="#topic-4">Core probability theory and maximum likelihood</a><a href="#topic-5">Taxonomy of generative models</a><a href="#topic-6">Codebase, Docker, GPU, and reproducibility</a></nav></header><div class="diagram" aria-label="Chapter workflow"><span>Observe data</span><b>&rarr;</b><span>Choose representation</span><b>&rarr;</b><span>Fit a distribution</span><b>&rarr;</b><span>Sample</span><b>&rarr;</b><span>Evaluate quality and coverage</span></div><section class="section"><h2>Detailed Notes</h2><div class="grid"><article class="note " id="topic-1"><h3>Generative versus discriminative modeling</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=31">Source: book pp. 3-8 / PDF p. 31</a><p>A discriminative model predicts a label or decision from an input, commonly p(y|x). A generative model describes a distribution over observations, p(x), or a joint/conditional distribution from which observations can be sampled. A conditional generator can produce x given y, such as an image of a requested class.</p><p>Generation is not restricted to images: text, music, trajectories, and other structured objects can be modeled. A convincing example is insufficient evidence of learning; test realism, diversity, controllability, and whether training items are being copied. The rise of deep learning made flexible representations and large-scale generators practical, but generation and intelligence are not identical concepts.</p></article>
+<article class="note yellow" id="topic-2"><h3>The first generative model and its assumptions</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=37">Source: book pp. 9-11 / PDF p. 37</a><p>The introductory example estimates a distribution from simple observations rather than immediately using a large neural network. Choose a sample space, represent the observed records, estimate probabilities, and draw new samples. The fitted distribution can only express structures allowed by the model family.</p><p>Separate the unknown population distribution from its finite training sample. Overfitting puts too much probability on the observed examples; underfitting misses real patterns. Held-out data and inspection of generated outputs expose different problems. A model that assigns plausible densities but samples badly, or generates attractive samples while missing most of the data, needs further investigation.</p></article>
+<article class="note cyan" id="topic-3"><h3>Representation learning and latent spaces</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=40">Source: book pp. 12-14 / PDF p. 40</a><p>Raw pixels or tokens are often a poor space for reasoning about meaningful changes. Representation learning maps observations into features or latent variables that make variation easier to model. A decoder/generator can map a latent point back to the observation space.</p><p>A useful latent representation can support interpolation, editing, and reuse across tasks. Low dimension alone does not guarantee semantic organization: nearby coordinates may not produce meaningful observations unless training imposes appropriate structure. Distinguish an inferred code for an observed example from a latent variable sampled from a chosen prior.</p></article>
+<article class="note pink" id="topic-4"><h3>Core probability theory and maximum likelihood</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=43">Source: book pp. 15-17 / PDF p. 43</a><p>A probability mass function applies to discrete outcomes; a probability density applies to continuous values, whose probability is obtained by integration. A density can exceed one without violating probability rules. Joint, marginal, and conditional distributions relate through the product rule and marginalization.</p><div class="equation">p(x,y) = p(x|y)p(y)<br>p(x|y) = p(y|x)p(x)/p(y)<br>Maximum likelihood: maximize &Sigma;<sub>i</sub> log p<sub>&theta;</sub>(x<sub>i</sub>)</div><p>Log likelihood turns products into sums and improves numerical stability. Minimizing negative log likelihood is not the same as minimizing a perceptual distance between one generated image and an arbitrary training image. The objective must match the probabilistic model.</p></article>
+<article class="note " id="topic-5"><h3>Taxonomy of generative models</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=46">Source: book pp. 18-19 / PDF p. 46</a><p><strong>VAEs</strong> use latent variables and an approximate inference model. <strong>GANs</strong> learn through an adversarial discriminator/critic without an easily evaluated likelihood. <strong>Autoregressive models</strong> factor a joint distribution into ordered conditionals. <strong>Flows</strong> transform a simple density through invertible mappings. <strong>Energy models</strong> learn unnormalized scores. <strong>Diffusion models</strong> learn to reverse progressive corruption.</p><p>Compare tractability of likelihood, sampling speed, architectural restrictions, sample quality, and training stability. These are families of trade-offs, not a leaderboard where one method wins every task. Later chapters show how families can be combined.</p></article>
+<article class="note yellow" id="topic-6"><h3>Codebase, Docker, GPU, and reproducibility</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=48">Source: book pp. 20-22 / PDF p. 48</a><p>The book provides a practical TensorFlow/Keras codebase. Clone the matching edition, inspect dependency versions, and use an isolated environment or the documented container. A container packages software dependencies; GPU execution additionally requires compatible host drivers and a supported runtime.</p><p>Record dataset versions, preprocessing, seeds, architecture, optimizer, checkpoints, and hardware. Confirm data loading, one training step, saving, reloading, and sampling on a small run before a long experiment. Historical package/API examples may need updating, but changes should preserve the stated learning objective and tensor shapes.</p></article></div></section><section class="section"><h2>Revision Check</h2><ol><li>How does learning p(x) differ from learning p(y|x)?</li><li>Why is a probability density allowed to exceed one?</li><li>How would you distinguish memorization from useful sampling?</li><li>Which model families expose an exact tractable likelihood?</li></ol><div class="callout">A generative model is a distributional hypothesis. Evaluate what it represents, what it omits, and how its samples are produced.</div></section><footer>Source links refer to the supplied PDF. Every contents-page topic is mapped in coverage.md. Consult the book for complete implementations, figures, exercises, citations, and experiment evidence.</footer></main></body></html>
