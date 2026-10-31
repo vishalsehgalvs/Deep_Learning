@@ -1,0 +1,123 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generative Deep Learning | Multimodal Models</title><style>@page { size: A4; margin: 10mm; }
+
+:root {
+  color-scheme: dark;
+  --board: #080a0b;
+  --ink: #f5f2e9;
+  --yellow: #f5d735;
+  --green: #a7f078;
+  --cyan: #52d8dc;
+  --pink: #ff91a9;
+  --muted: #c4c6bf;
+  --rule: rgba(245, 242, 233, .26);
+  --hand: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #111415;
+  color: var(--ink);
+  font: 16px/1.6 var(--hand);
+}
+.board {
+  max-width: 1440px;
+  margin: 24px auto;
+  padding: clamp(24px, 5vw, 72px);
+  overflow: hidden;
+  background-color: var(--board);
+  background-image: radial-gradient(rgba(230, 239, 230, .17) 1px, transparent 1.2px);
+  background-size: 28px 28px;
+  border: 1px solid #252a2b;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+}
+.masthead { max-width: 980px; margin: 0 auto 34px; text-align: center; }
+.eyebrow, .section-number { color: var(--cyan); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  margin: 8px 0 12px;
+  color: var(--yellow);
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.15;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 9px;
+}
+.subtitle { margin: 20px 0; font-size: 19px; }
+.thesis {
+  margin: 0 auto;
+  padding: 12px 18px;
+  border-block: 2px solid var(--green);
+  color: var(--green);
+  font-size: 17px;
+}
+nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 22px; }
+nav a { color: var(--cyan); text-underline-offset: 4px; }
+a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.section { padding: 28px 0 38px; border-top: 1px dashed var(--rule); scroll-margin-top: 16px; }
+.section-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 22px; }
+h2 {
+  margin-bottom: 0;
+  color: var(--yellow);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.25;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+h3 { margin-bottom: 8px; color: var(--green); font-size: 19px; line-height: 1.35; }
+p { margin-bottom: 11px; }
+ul, ol { margin: 7px 0 13px; padding-left: 23px; }
+li { margin: 3px 0; padding-left: 3px; }
+li::marker { color: var(--cyan); }
+strong { color: var(--yellow); }
+em { color: var(--cyan); font-style: normal; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 36px; }
+.note { min-width: 0; padding-left: 16px; border-left: 2px solid var(--green); }
+.note.yellow { border-color: var(--yellow); }
+.note.cyan { border-color: var(--cyan); }
+.note.pink { border-color: var(--pink); }
+.wide { grid-column: 1 / -1; }
+.flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin: 13px 0; }
+.step { flex: 1 1 140px; min-width: 0; padding: 9px 11px; border: 1px solid var(--green); text-align: center; }
+.arrow { align-self: center; color: var(--yellow); font-size: 21px; }
+.equation { margin: 12px 0; padding: 9px 13px; border-left: 3px solid var(--cyan); color: var(--cyan); overflow-wrap: anywhere; }
+.callout { margin: 13px 0; padding: 11px 14px; border: 1px dashed var(--yellow); color: var(--yellow); }
+.small { color: var(--muted); font-size: 14px; }
+.pink-text { color: var(--pink); }
+table { width: 100%; margin: 12px 0; border-collapse: collapse; text-align: left; }
+th, td { padding: 8px 9px; border-bottom: 1px dashed var(--rule); vertical-align: top; }
+th { color: var(--cyan); }
+.checklist { columns: 2; column-gap: 30px; }
+.checklist li { break-inside: avoid; }
+footer { padding-top: 20px; border-top: 1px dashed var(--rule); color: var(--muted); text-align: center; font-size: 13px; }
+@media (max-width: 760px) {
+  .board { margin: 0; padding: 26px 19px; border-radius: 0; }
+  .grid { grid-template-columns: 1fr; gap: 21px; }
+  .wide { grid-column: auto; }
+  .checklist { columns: 1; }
+  .step { flex-basis: 100%; }
+  .arrow { width: 100%; text-align: center; transform: rotate(90deg); }
+}
+@media print {
+  :root { color-scheme: dark; }
+  body { background: var(--board); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .board { max-width: none; margin: 0; padding: 5mm; border: 0; border-radius: 0; box-shadow: none; }
+  nav { display: none; }
+  .section { break-inside: auto; }
+  .note { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+h1{font-size:38px}h2{font-size:27px}.source,.meta{color:var(--muted);font-size:12px}.source{display:block;margin:4px 0 12px}.note{overflow-wrap:anywhere}.note h4{color:var(--cyan);margin:12px 0 5px}a{color:var(--cyan)}.chapter-list{padding:0;list-style:none}.chapter-list li{padding:13px 0;border-bottom:1px dashed var(--rule)}.chapter-list strong{display:block}.meta{margin-top:18px}.diagram{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0}.diagram span{border:1px solid var(--cyan);padding:8px 12px}.diagram b{color:var(--yellow)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--cyan)}
+@media(max-width:760px){h1{font-size:30px}h2{font-size:23px}}
+@media print{body{font-size:11pt;line-height:1.5}.grid{display:block}.note{margin-bottom:20px;break-inside:avoid}h1{font-size:26pt}h2{font-size:19pt}h3{font-size:14pt}.board{padding:5mm}.source,.meta{font-size:8pt}.section{padding:18px 0}.masthead{margin-bottom:20px}pre{font-size:9pt}}
+</style></head><body><main class="board"><header class="masthead"><div class="eyebrow">Generative Deep Learning | Chapter 13</div><h1>Multimodal Models</h1><p class="thesis">Connect language and vision through shared representations, conditioned diffusion, and visual-language interfaces. Distinguish systems that generate images from systems that answer about images.</p><p class="meta">Original study notes based on David Foster, Second edition, 2023. Book pp. 359-390. Source APIs, services, experiments, and model comparisons reflect the book's publication period. These are explanatory summaries, not verbatim reproductions or a claim that every source detail is retained.</p><nav aria-label="Notes navigation"><a href="index.html">All chapters</a><a href="#topic-1">DALL-E 2 architecture and text-image alignment</a><a href="#topic-2">CLIP contrastive learning</a><a href="#topic-3">The prior, decoder, and DALL-E examples</a><a href="#topic-4">Imagen and DrawBench</a><a href="#topic-5">Stable Diffusion and latent diffusion</a><a href="#topic-6">Flamingo: vision encoder and Perceiver Resampler</a><a href="#topic-7">Flamingo language model, examples, and comparison</a></nav></header><div class="diagram" aria-label="Chapter workflow"><span>Text / image input</span><b>&rarr;</b><span>Modality encoders</span><b>&rarr;</b><span>Aligned or conditioned representation</span><b>&rarr;</b><span>Generator / language model</span><b>&rarr;</b><span>Task-specific evaluation</span></div><section class="section"><h2>Detailed Notes</h2><div class="grid"><article class="note " id="topic-1"><h3>DALL-E 2 architecture and text-image alignment</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=387">Source: book pp. 359-362 / PDF p. 387</a><p>DALL-E 2 separates representation alignment, a prior, and an image decoder. CLIP supplies a shared relationship between text and image representations; a prior predicts suitable image embeddings from the text condition; a diffusion decoder turns image embeddings into images.</p><p>This is not simply a language model producing RGB pixels. Distinguish the role of the text encoder, learned image-latent prior, conditional decoder, and later upsampling stages. Each can introduce failures in interpretation or rendering.</p></article>
+<article class="note yellow" id="topic-2"><h3>CLIP contrastive learning</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=390">Source: book pp. 362-366 / PDF p. 390</a><p>Train text and image encoders so corresponding pairs receive high similarity and mismatched pairs in the batch receive lower similarity. Normalize representations and use a temperature-scaled contrastive loss.</p><p>CLIP representations support retrieval and flexible text-based classification, but similarity does not establish compositional or factual correctness. A scene can match the general topic while getting counts, relations, or attributes wrong. Data biases and prompt wording affect alignment.</p></article>
+<article class="note cyan" id="topic-3"><h3>The prior, decoder, and DALL-E examples</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=395">Source: book pp. 367-376 / PDF p. 395</a><p>The prior connects text representations to the image-embedding distribution; a diffusion prior is one way to model that conditional distribution. The decoder uses image embeddings and conditioning to guide denoising, with subsequent resolution increases.</p><p>Classifier-free guidance combines conditional and unconditional predictions to strengthen adherence, typically trading diversity and sometimes artifacts against prompt alignment. Inspect text rendering, object counts, spatial relations, binding of attributes, and cultural/demographic representation. Curated examples demonstrate possibilities but do not estimate overall reliability.</p></article>
+<article class="note pink" id="topic-4"><h3>Imagen and DrawBench</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=405">Source: book pp. 377-379 / PDF p. 405</a><p>Imagen conditions diffusion on a strong pretrained text encoder and uses a cascade of image-generation and super-resolution models. The book emphasizes language understanding as a major contributor to text-image alignment.</p><p>DrawBench stresses prompt categories such as composition, counting, spatial relations, unusual scenes, and text rendering. Human comparisons are useful but depend on raters, prompts, and presentation. Distinguish quality of generated imagery from correctness of what the prompt requested.</p></article>
+<article class="note " id="topic-5"><h3>Stable Diffusion and latent diffusion</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=408">Source: book pp. 380-381 / PDF p. 408</a><p>Stable Diffusion performs denoising in a compressed latent representation rather than directly at full image resolution. An image autoencoder encodes/decodes between pixels and latents, while text conditioning guides a denoising network, commonly through cross-attention.</p><p>Compression reduces cost but can lose detail or introduce reconstruction limitations. Sampling schedules, guidance strength, resolution, and decoder quality all affect output. Available weights do not remove licensing, dataset-provenance, or misuse considerations. The described architecture refers to the book’s model generation, not every later product called diffusion.</p></article>
+<article class="note yellow" id="topic-6"><h3>Flamingo: vision encoder and Perceiver Resampler</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=409">Source: book pp. 381-384 / PDF p. 409</a><p>Flamingo is a visual language model that continues interleaved image/video and text inputs. A vision encoder produces visual features, while a Perceiver Resampler compresses variable-size visual input into a fixed number of tokens suitable for language conditioning.</p><p>Learned latent queries attend to visual features, controlling the amount of visual information passed downstream. This differs from treating the image only as a caption. Temporal/image organization and the model’s permitted attention over previous media matter for multi-image/video reasoning.</p></article>
+<article class="note cyan" id="topic-7"><h3>Flamingo language model, examples, and comparison</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=413">Source: book pp. 385-390 / PDF p. 413</a><p>New gated cross-attention components let a pretrained language model use visual tokens while retaining much of its existing capability. The original framework freezes important pretrained components and learns the connecting modules, enabling in-context visual-language tasks.</p><p>Test image-grounded answering, captioning, multi-image context, and hallucination separately. DALL-E/Imagen/Stable Diffusion generate images from conditioning; Flamingo generates language conditioned on media. Multimodality is an interface and training-design choice, not a guarantee of correct perception or reasoning.</p></article></div></section><section class="section"><h2>Revision Check</h2><ol><li>What do the CLIP model, prior, and decoder each do?</li><li>Why does CLIP similarity not guarantee correct counting?</li><li>How does latent diffusion reduce cost?</li><li>What problem does the Perceiver Resampler solve?</li><li>Which systems generate images and which generate language about images?</li></ol><div class="callout">Track where modalities meet, what information is compressed, and how conditioning is evaluated. Attractive media and accurate grounded behavior are different targets.</div></section><footer>Source links refer to the supplied PDF. Every contents-page topic is mapped in coverage.md. Consult the book for complete implementations, figures, exercises, citations, and experiment evidence.</footer></main></body></html>
