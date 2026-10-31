@@ -1,0 +1,123 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generative Deep Learning | Diffusion Models</title><style>@page { size: A4; margin: 10mm; }
+
+:root {
+  color-scheme: dark;
+  --board: #080a0b;
+  --ink: #f5f2e9;
+  --yellow: #f5d735;
+  --green: #a7f078;
+  --cyan: #52d8dc;
+  --pink: #ff91a9;
+  --muted: #c4c6bf;
+  --rule: rgba(245, 242, 233, .26);
+  --hand: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #111415;
+  color: var(--ink);
+  font: 16px/1.6 var(--hand);
+}
+.board {
+  max-width: 1440px;
+  margin: 24px auto;
+  padding: clamp(24px, 5vw, 72px);
+  overflow: hidden;
+  background-color: var(--board);
+  background-image: radial-gradient(rgba(230, 239, 230, .17) 1px, transparent 1.2px);
+  background-size: 28px 28px;
+  border: 1px solid #252a2b;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+}
+.masthead { max-width: 980px; margin: 0 auto 34px; text-align: center; }
+.eyebrow, .section-number { color: var(--cyan); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  margin: 8px 0 12px;
+  color: var(--yellow);
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.15;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 9px;
+}
+.subtitle { margin: 20px 0; font-size: 19px; }
+.thesis {
+  margin: 0 auto;
+  padding: 12px 18px;
+  border-block: 2px solid var(--green);
+  color: var(--green);
+  font-size: 17px;
+}
+nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 22px; }
+nav a { color: var(--cyan); text-underline-offset: 4px; }
+a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.section { padding: 28px 0 38px; border-top: 1px dashed var(--rule); scroll-margin-top: 16px; }
+.section-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 22px; }
+h2 {
+  margin-bottom: 0;
+  color: var(--yellow);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.25;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+h3 { margin-bottom: 8px; color: var(--green); font-size: 19px; line-height: 1.35; }
+p { margin-bottom: 11px; }
+ul, ol { margin: 7px 0 13px; padding-left: 23px; }
+li { margin: 3px 0; padding-left: 3px; }
+li::marker { color: var(--cyan); }
+strong { color: var(--yellow); }
+em { color: var(--cyan); font-style: normal; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 36px; }
+.note { min-width: 0; padding-left: 16px; border-left: 2px solid var(--green); }
+.note.yellow { border-color: var(--yellow); }
+.note.cyan { border-color: var(--cyan); }
+.note.pink { border-color: var(--pink); }
+.wide { grid-column: 1 / -1; }
+.flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin: 13px 0; }
+.step { flex: 1 1 140px; min-width: 0; padding: 9px 11px; border: 1px solid var(--green); text-align: center; }
+.arrow { align-self: center; color: var(--yellow); font-size: 21px; }
+.equation { margin: 12px 0; padding: 9px 13px; border-left: 3px solid var(--cyan); color: var(--cyan); overflow-wrap: anywhere; }
+.callout { margin: 13px 0; padding: 11px 14px; border: 1px dashed var(--yellow); color: var(--yellow); }
+.small { color: var(--muted); font-size: 14px; }
+.pink-text { color: var(--pink); }
+table { width: 100%; margin: 12px 0; border-collapse: collapse; text-align: left; }
+th, td { padding: 8px 9px; border-bottom: 1px dashed var(--rule); vertical-align: top; }
+th { color: var(--cyan); }
+.checklist { columns: 2; column-gap: 30px; }
+.checklist li { break-inside: avoid; }
+footer { padding-top: 20px; border-top: 1px dashed var(--rule); color: var(--muted); text-align: center; font-size: 13px; }
+@media (max-width: 760px) {
+  .board { margin: 0; padding: 26px 19px; border-radius: 0; }
+  .grid { grid-template-columns: 1fr; gap: 21px; }
+  .wide { grid-column: auto; }
+  .checklist { columns: 1; }
+  .step { flex-basis: 100%; }
+  .arrow { width: 100%; text-align: center; transform: rotate(90deg); }
+}
+@media print {
+  :root { color-scheme: dark; }
+  body { background: var(--board); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .board { max-width: none; margin: 0; padding: 5mm; border: 0; border-radius: 0; box-shadow: none; }
+  nav { display: none; }
+  .section { break-inside: auto; }
+  .note { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+h1{font-size:38px}h2{font-size:27px}.source,.meta{color:var(--muted);font-size:12px}.source{display:block;margin:4px 0 12px}.note{overflow-wrap:anywhere}.note h4{color:var(--cyan);margin:12px 0 5px}a{color:var(--cyan)}.chapter-list{padding:0;list-style:none}.chapter-list li{padding:13px 0;border-bottom:1px dashed var(--rule)}.chapter-list strong{display:block}.meta{margin-top:18px}.diagram{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0}.diagram span{border:1px solid var(--cyan);padding:8px 12px}.diagram b{color:var(--yellow)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--cyan)}
+@media(max-width:760px){h1{font-size:30px}h2{font-size:23px}}
+@media print{body{font-size:11pt;line-height:1.5}.grid{display:block}.note{margin-bottom:20px;break-inside:avoid}h1{font-size:26pt}h2{font-size:19pt}h3{font-size:14pt}.board{padding:5mm}.source,.meta{font-size:8pt}.section{padding:18px 0}.masthead{margin-bottom:20px}pre{font-size:9pt}}
+</style></head><body><main class="board"><header class="masthead"><div class="eyebrow">Generative Deep Learning | Chapter 8</div><h1>Diffusion Models</h1><p class="thesis">Learn to remove controlled noise at different corruption levels, then generate by repeatedly denoising an initial noise sample. The schedule, denoiser, and sampling rule jointly define the result.</p><p class="meta">Original study notes based on David Foster, Second edition, 2023. Book pp. 205-234. Source APIs, services, experiments, and model comparisons reflect the book's publication period. These are explanatory summaries, not verbatim reproductions or a claim that every source detail is retained.</p><nav aria-label="Notes navigation"><a href="index.html">All chapters</a><a href="#topic-1">Denoising models, score models, and flower data</a><a href="#topic-2">Forward diffusion and reparameterization</a><a href="#topic-3">Diffusion schedules</a><a href="#topic-4">Reverse diffusion and noise prediction</a><a href="#topic-5">The U-Net denoiser</a><a href="#topic-6">Training, EMA, and reverse sampling</a><a href="#topic-7">Analysis and sampling trade-offs</a></nav></header><div class="diagram" aria-label="Chapter workflow"><span>Clean image + noise level</span><b>&rarr;</b><span>Corrupt with known noise</span><b>&rarr;</b><span>Predict noise</span><b>&rarr;</b><span>Learn denoising</span><b>&rarr;</b><span>Iterate from random noise</span></div><section class="section"><h2>Detailed Notes</h2><div class="grid"><article class="note " id="topic-1"><h3>Denoising models, score models, and flower data</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=233">Source: book pp. 205-208 / PDF p. 233</a><p>Diffusion replaces one-shot generation with a series of smaller denoising problems. A forward process makes data progressively less informative; a learned reverse process restores structure. The flower-image project illustrates image normalization, resizing, batching, and realistic sampling.</p><p>Denoising diffusion and score-based models are closely connected through the gradient of log density at different noise levels. Their relationship does not mean every implementation uses the same objective or sampler. Separate the mathematical probabilistic formulation from the simplified continuous-time denoiser used in the project.</p></article>
+<article class="note yellow" id="topic-2"><h3>Forward diffusion and reparameterization</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=237">Source: book pp. 209-210 / PDF p. 237</a><p>Mix a clean image with Gaussian noise using time-dependent signal and noise rates. The corrupted sample can be constructed directly at an arbitrary time, without simulating every earlier step.</p><div class="equation">x<sub>t</sub> = s(t)x<sub>0</sub> + n(t)&epsilon;, &epsilon; ~ N(0,I)<br>s(t)<sup>2</sup> + n(t)<sup>2</sup> = 1<br>Discrete notation: s(t)=&radic;&alpha;&#772;<sub>t</sub>, n(t)=&radic;(1-&alpha;&#772;<sub>t</sub>)</div><p>Rates are amplitudes, not variances. Confusing square roots with variances changes the corruption distribution. Data normalization should align with the assumed signal/noise scales. A random noise level per training example efficiently covers the denoising problem.</p></article>
+<article class="note cyan" id="topic-3"><h3>Diffusion schedules</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=239">Source: book pp. 211-213 / PDF p. 239</a><p>A schedule controls how information disappears over time. Linear schedules and cosine schedules allocate difficulty differently; an offset cosine keeps endpoint rates away from numerically dangerous extremes.</p><div class="equation">s(t)=cos(angle(t)), n(t)=sin(angle(t))</div><p>Inspect signal rate, noise rate, and signal-to-noise ratio throughout the interval. Very small signal rates make reconstructing the clean image numerically sensitive. The schedule used in training and the interpretation of time during sampling must agree. More noise is a learning condition, not simply arbitrary data augmentation.</p></article>
+<article class="note pink" id="topic-4"><h3>Reverse diffusion and noise prediction</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=242">Source: book pp. 214-216 / PDF p. 242</a><p>The denoiser predicts the noise component conditioned on the corrupted image and noise level. Estimate the clean image, then combine that estimate with predicted noise at a slightly less noisy time.</p><div class="equation">x&#770;<sub>0</sub> = (x<sub>t</sub> - n(t)&epsilon;&#770;<sub>&theta;</sub>(x<sub>t</sub>,t)) / s(t)</div><p>Do not confuse this deterministic rate-based update with every stochastic DDPM reverse transition. The sampler specifies how uncertainty/noise is introduced between steps. Finite-step error compounds, and dividing by near-zero s(t) is unstable. Preserve the final denoised image rather than returning an arbitrary intermediate noisy state.</p></article>
+<article class="note " id="topic-5"><h3>The U-Net denoiser</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=245">Source: book pp. 217-223 / PDF p. 245</a><p>A U-Net downsamples spatial features, processes a compressed representation, then upsamples while combining same-resolution skip features. These connections preserve detail and support both global structure and local corrections.</p><p>Encode diffusion time/noise variance, often with sinusoidal features, and inject it into the network so identical pixel values at different noise levels are interpreted differently. Residual blocks ease optimization. Track feature-map shapes across skip concatenations, and match the output channels to the predicted noise. Denoising is a conditioned regression problem, not an image-classification head.</p></article>
+<article class="note yellow" id="topic-6"><h3>Training, EMA, and reverse sampling</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=252">Source: book pp. 224-227 / PDF p. 252</a><p>For each batch, sample clean images, Gaussian noise, and times; form corrupted images; predict noise; minimize the chosen denoising error. Reconstruction error can be monitored separately. Match the exact loss/reduction to the implementation rather than mixing incompatible DDPM or tutorial conventions.</p><p>Exponential moving averages (EMA) of weights can stabilize sampling. Start generation from Gaussian noise, step through decreasing times using the same schedule semantics, then undo normalization. During inference use inference-mode normalization/weights consistently. Record schedule, step count, seed, and whether EMA weights were used.</p></article>
+<article class="note cyan" id="topic-7"><h3>Analysis and sampling trade-offs</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=256">Source: book pp. 228-234 / PDF p. 256</a><p>Compare samples at different reverse-step counts and inspect intermediate denoising trajectories. More steps can improve approximation at higher latency, but sampler design matters too. A low denoising loss alone cannot establish realistic flower diversity or absence of memorization.</p><p>Check consistency across seeds, generated diversity, training-data overlap, and failure cases such as implausible geometry. Diffusion is computationally intensive at sample time; latent diffusion and later architectural refinements address part of that cost. Learned denoising is powerful, but output validity still needs domain-specific assessment.</p></article></div></section><section class="section"><h2>Revision Check</h2><ol><li>Why do the signal and noise rate squares sum to one?</li><li>How can training sample arbitrary noise times directly?</li><li>Why is time conditioning essential?</li><li>What happens near zero signal rate?</li><li>How do sampling steps and EMA affect evaluation?</li></ol><div class="callout">A diffusion checkpoint is not the whole generator: data normalization, schedule, time encoding, and reverse sampler must remain compatible.</div></section><footer>Source links refer to the supplied PDF. Every contents-page topic is mapped in coverage.md. Consult the book for complete implementations, figures, exercises, citations, and experiment evidence.</footer></main></body></html>
