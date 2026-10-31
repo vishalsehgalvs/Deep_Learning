@@ -1,0 +1,122 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generative Deep Learning | Transformers</title><style>@page { size: A4; margin: 10mm; }
+
+:root {
+  color-scheme: dark;
+  --board: #080a0b;
+  --ink: #f5f2e9;
+  --yellow: #f5d735;
+  --green: #a7f078;
+  --cyan: #52d8dc;
+  --pink: #ff91a9;
+  --muted: #c4c6bf;
+  --rule: rgba(245, 242, 233, .26);
+  --hand: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #111415;
+  color: var(--ink);
+  font: 16px/1.6 var(--hand);
+}
+.board {
+  max-width: 1440px;
+  margin: 24px auto;
+  padding: clamp(24px, 5vw, 72px);
+  overflow: hidden;
+  background-color: var(--board);
+  background-image: radial-gradient(rgba(230, 239, 230, .17) 1px, transparent 1.2px);
+  background-size: 28px 28px;
+  border: 1px solid #252a2b;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+}
+.masthead { max-width: 980px; margin: 0 auto 34px; text-align: center; }
+.eyebrow, .section-number { color: var(--cyan); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  margin: 8px 0 12px;
+  color: var(--yellow);
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.15;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 9px;
+}
+.subtitle { margin: 20px 0; font-size: 19px; }
+.thesis {
+  margin: 0 auto;
+  padding: 12px 18px;
+  border-block: 2px solid var(--green);
+  color: var(--green);
+  font-size: 17px;
+}
+nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 22px; }
+nav a { color: var(--cyan); text-underline-offset: 4px; }
+a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.section { padding: 28px 0 38px; border-top: 1px dashed var(--rule); scroll-margin-top: 16px; }
+.section-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 22px; }
+h2 {
+  margin-bottom: 0;
+  color: var(--yellow);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.25;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+}
+h3 { margin-bottom: 8px; color: var(--green); font-size: 19px; line-height: 1.35; }
+p { margin-bottom: 11px; }
+ul, ol { margin: 7px 0 13px; padding-left: 23px; }
+li { margin: 3px 0; padding-left: 3px; }
+li::marker { color: var(--cyan); }
+strong { color: var(--yellow); }
+em { color: var(--cyan); font-style: normal; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 36px; }
+.note { min-width: 0; padding-left: 16px; border-left: 2px solid var(--green); }
+.note.yellow { border-color: var(--yellow); }
+.note.cyan { border-color: var(--cyan); }
+.note.pink { border-color: var(--pink); }
+.wide { grid-column: 1 / -1; }
+.flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin: 13px 0; }
+.step { flex: 1 1 140px; min-width: 0; padding: 9px 11px; border: 1px solid var(--green); text-align: center; }
+.arrow { align-self: center; color: var(--yellow); font-size: 21px; }
+.equation { margin: 12px 0; padding: 9px 13px; border-left: 3px solid var(--cyan); color: var(--cyan); overflow-wrap: anywhere; }
+.callout { margin: 13px 0; padding: 11px 14px; border: 1px dashed var(--yellow); color: var(--yellow); }
+.small { color: var(--muted); font-size: 14px; }
+.pink-text { color: var(--pink); }
+table { width: 100%; margin: 12px 0; border-collapse: collapse; text-align: left; }
+th, td { padding: 8px 9px; border-bottom: 1px dashed var(--rule); vertical-align: top; }
+th { color: var(--cyan); }
+.checklist { columns: 2; column-gap: 30px; }
+.checklist li { break-inside: avoid; }
+footer { padding-top: 20px; border-top: 1px dashed var(--rule); color: var(--muted); text-align: center; font-size: 13px; }
+@media (max-width: 760px) {
+  .board { margin: 0; padding: 26px 19px; border-radius: 0; }
+  .grid { grid-template-columns: 1fr; gap: 21px; }
+  .wide { grid-column: auto; }
+  .checklist { columns: 1; }
+  .step { flex-basis: 100%; }
+  .arrow { width: 100%; text-align: center; transform: rotate(90deg); }
+}
+@media print {
+  :root { color-scheme: dark; }
+  body { background: var(--board); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .board { max-width: none; margin: 0; padding: 5mm; border: 0; border-radius: 0; box-shadow: none; }
+  nav { display: none; }
+  .section { break-inside: auto; }
+  .note { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+h1{font-size:38px}h2{font-size:27px}.source,.meta{color:var(--muted);font-size:12px}.source{display:block;margin:4px 0 12px}.note{overflow-wrap:anywhere}.note h4{color:var(--cyan);margin:12px 0 5px}a{color:var(--cyan)}.chapter-list{padding:0;list-style:none}.chapter-list li{padding:13px 0;border-bottom:1px dashed var(--rule)}.chapter-list strong{display:block}.meta{margin-top:18px}.diagram{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0}.diagram span{border:1px solid var(--cyan);padding:8px 12px}.diagram b{color:var(--yellow)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--cyan)}
+@media(max-width:760px){h1{font-size:30px}h2{font-size:23px}}
+@media print{body{font-size:11pt;line-height:1.5}.grid{display:block}.note{margin-bottom:20px;break-inside:avoid}h1{font-size:26pt}h2{font-size:19pt}h3{font-size:14pt}.board{padding:5mm}.source,.meta{font-size:8pt}.section{padding:18px 0}.masthead{margin-bottom:20px}pre{font-size:9pt}}
+</style></head><body><main class="board"><header class="masthead"><div class="eyebrow">Generative Deep Learning | Chapter 9</div><h1>Transformers</h1><p class="thesis">Build a GPT-style causal token predictor using attention, position information, residual blocks, and next-token training; then distinguish it from encoder and encoder-decoder models.</p><p class="meta">Original study notes based on David Foster, Second edition, 2023. Book pp. 235-266. Source APIs, services, experiments, and model comparisons reflect the book's publication period. These are explanatory summaries, not verbatim reproductions or a claim that every source detail is retained.</p><nav aria-label="Notes navigation"><a href="index.html">All chapters</a><a href="#topic-1">GPT and the wine-review dataset</a><a href="#topic-2">Attention, queries, keys, and values</a><a href="#topic-3">Multihead attention and causal masking</a><a href="#topic-4">Transformer blocks and positional encoding</a><a href="#topic-5">Training and analyzing GPT</a><a href="#topic-6">Other transformers: T5, GPT-3/GPT-4, and ChatGPT</a></nav></header><div class="diagram" aria-label="Chapter workflow"><span>Tokenize reviews</span><b>&rarr;</b><span>Token + position embeddings</span><b>&rarr;</b><span>Causal attention blocks</span><b>&rarr;</b><span>Vocabulary logits</span><b>&rarr;</b><span>Sample next token</span></div><section class="section"><h2>Detailed Notes</h2><div class="grid"><article class="note " id="topic-1"><h3>GPT and the wine-review dataset</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=263">Source: book pp. 235-237 / PDF p. 263</a><p>The chapter trains a small decoder-only GPT on wine reviews. Prepare consistent review boundaries and tokenization, create shifted input/target sequences, and choose a vocabulary and maximum sequence length suited to the data.</p><p>The model learns continuation, not a database of objectively verified wine properties. Generated reviews should be checked for repetition, contradictions, and copying. A small project clarifies architecture without implying the capabilities of a frontier-scale pretrained model.</p></article>
+<article class="note yellow" id="topic-2"><h3>Attention, queries, keys, and values</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=266">Source: book pp. 238-240 / PDF p. 266</a><p>Attention builds a context-dependent representation by weighting other token representations. Queries express the information sought, keys determine matching, and values provide the content combined.</p><div class="equation">Q=XW<sub>Q</sub>, K=XW<sub>K</sub>, V=XW<sub>V</sub><br>Attention = softmax(QK<sup>T</sup>/&radic;d<sub>k</sub>)V</div><p>Scale dot products to avoid extreme logits as dimensions grow. Apply softmax over the intended key/token dimension. Tensor axes for batch, heads, positions, and features must be explicit; swapping sequence and feature dimensions can produce a runnable but incorrect model.</p></article>
+<article class="note cyan" id="topic-3"><h3>Multihead attention and causal masking</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=269">Source: book pp. 241-244 / PDF p. 269</a><p>Multiple heads learn complementary projections and attention patterns; concatenate/project their outputs back to the model width. Causal masking prevents a token representation from accessing later target positions.</p><p>Set disallowed attention logits to a sufficiently negative value before softmax, not merely zero after computing probabilities without renormalization. Padding masks and causal masks address different issues. During training the full sequence is present, so the mask is essential to prevent leakage. At generation, only the visible prefix is supplied.</p></article>
+<article class="note pink" id="topic-4"><h3>Transformer blocks and positional encoding</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=273">Source: book pp. 245-249 / PDF p. 273</a><p>A transformer block combines attention, a positionwise feedforward network, residual connections, and normalization. Attention mixes information across positions; the feedforward network transforms features at each position. Pre/post-normalization conventions affect optimization.</p><p>Without position information, self-attention alone is insensitive to token order in the required way. Learned or sinusoidal positional representations distinguish locations. The project embeds token identity and position together. Vocabulary size, model width, head count, depth, and context length influence parameter count, computation, and memory.</p></article>
+<article class="note " id="topic-5"><h3>Training and analyzing GPT</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=278">Source: book pp. 250-254 / PDF p. 278</a><p>Train the vocabulary head using next-token cross-entropy. During generation, repeatedly evaluate the prefix, obtain the next-token distribution, sample under the chosen temperature, append, and stop at an end marker or length bound.</p><p>Inspect attention patterns to see which positions a head uses, while recognizing that a heat map is not a complete causal explanation. Compare held-out loss, review coherence, factual contradictions, and sample diversity. Training cost, sequential output cost, and context-length limits remain practical constraints.</p></article>
+<article class="note yellow" id="topic-6"><h3>Other transformers: T5, GPT-3/GPT-4, and ChatGPT</h3><a class="source" href="../../Generative-Deep-Learning%20.pdf#page=283">Source: book pp. 255-266 / PDF p. 283</a><p>Encoder models use bidirectional context for understanding tasks; decoder models use causal context for continuation; encoder-decoder models condition a generated sequence on an encoded input. T5 frames varied tasks in a text-to-text format and uses a denoising pretraining objective.</p><p>The book places larger GPT models in a scaling and in-context-learning context. ChatGPT-style behavior adds supervised demonstrations and preference-based training to a pretrained model. Distinguish fluent completion from instruction-following and alignment. The model descriptions are historical; undisclosed architectures or later product behavior must not be inferred from these examples.</p></article></div></section><section class="section"><h2>Revision Check</h2><ol><li>Which axis does attention softmax normalize?</li><li>Why do causal and padding masks differ?</li><li>What do positional embeddings add?</li><li>How does GPT differ from T5?</li><li>Why is attention visualization not proof of causal reasoning?</li></ol><div class="callout">Architecture and training objective determine permitted information flow. “Transformer” alone does not specify whether a model understands, translates, or generates.</div></section><footer>Source links refer to the supplied PDF. Every contents-page topic is mapped in coverage.md. Consult the book for complete implementations, figures, exercises, citations, and experiment evidence.</footer></main></body></html>
