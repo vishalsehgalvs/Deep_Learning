@@ -2,6 +2,10 @@
 
 This repo is where I'm documenting everything I learn about Deep Learning — in plain English, no fancy jargon. Think of it as notes written by someone who is learning, for someone who is learning.
 
+## Book Notes
+
+See [Generative Deep Learning chapter notes](Book_Notes/index.html) for the HTML/PDF collection and coverage map.
+
 ---
 
 ## What's in here
